@@ -1,0 +1,302 @@
+{
+  "metadata": {
+    "meeting_date": "2026-03-25",
+    "meeting_time": "23:01",
+    "duration": "33m 51s",
+    "speakers": 3,
+    "audio_file": "C:\\Users\\PC\\AppData\\Local\\Temp\\tmpdohuu1jm.mp4",
+    "processing_date": "2026-03-25T23:01:28",
+    "whisper_model": "large-v3",
+    "llm_model": "qwen2.5-coder:32b",
+    "quality_flags": [
+      {
+        "type": "low_confidence",
+        "timestamp": "03:43-03:44",
+        "description": "Low transcription confidence, text may be inaccurate"
+      },
+      {
+        "type": "low_confidence",
+        "timestamp": "05:53-06:04",
+        "description": "Low transcription confidence, text may be inaccurate"
+      },
+      {
+        "type": "low_confidence",
+        "timestamp": "07:03-07:08",
+        "description": "Low transcription confidence, text may be inaccurate"
+      },
+      {
+        "type": "low_confidence",
+        "timestamp": "10:34-10:36",
+        "description": "Low transcription confidence, text may be inaccurate"
+      },
+      {
+        "type": "low_confidence",
+        "timestamp": "11:50-11:54",
+        "description": "Low transcription confidence, text may be inaccurate"
+      },
+      {
+        "type": "low_confidence",
+        "timestamp": "11:58-11:59",
+        "description": "Low transcription confidence, text may be inaccurate"
+      },
+      {
+        "type": "low_confidence",
+        "timestamp": "14:59-15:00",
+        "description": "Low transcription confidence, text may be inaccurate"
+      },
+      {
+        "type": "low_confidence",
+        "timestamp": "16:59-17:02",
+        "description": "Low transcription confidence, text may be inaccurate"
+      },
+      {
+        "type": "low_confidence",
+        "timestamp": "18:48-18:51",
+        "description": "Low transcription confidence, text may be inaccurate"
+      },
+      {
+        "type": "low_confidence",
+        "timestamp": "19:15-19:16",
+        "description": "Low transcription confidence, text may be inaccurate"
+      },
+      {
+        "type": "low_confidence",
+        "timestamp": "19:21-19:22",
+        "description": "Low transcription confidence, text may be inaccurate"
+      },
+      {
+        "type": "low_confidence",
+        "timestamp": "19:59-20:00",
+        "description": "Low transcription confidence, text may be inaccurate"
+      },
+      {
+        "type": "low_confidence",
+        "timestamp": "23:08-23:16",
+        "description": "Low transcription confidence, text may be inaccurate"
+      },
+      {
+        "type": "low_confidence",
+        "timestamp": "29:28-29:40",
+        "description": "Low transcription confidence, text may be inaccurate"
+      },
+      {
+        "type": "low_confidence",
+        "timestamp": "29:45-29:47",
+        "description": "Low transcription confidence, text may be inaccurate"
+      },
+      {
+        "type": "low_confidence",
+        "timestamp": "29:55-29:57",
+        "description": "Low transcription confidence, text may be inaccurate"
+      },
+      {
+        "type": "low_confidence",
+        "timestamp": "30:06-30:09",
+        "description": "Low transcription confidence, text may be inaccurate"
+      },
+      {
+        "type": "low_confidence",
+        "timestamp": "30:48-30:49",
+        "description": "Low transcription confidence, text may be inaccurate"
+      },
+      {
+        "type": "low_confidence",
+        "timestamp": "31:25-31:28",
+        "description": "Low transcription confidence, text may be inaccurate"
+      },
+      {
+        "type": "low_confidence",
+        "timestamp": "33:18-33:21",
+        "description": "Low transcription confidence, text may be inaccurate"
+      },
+      {
+        "type": "low_confidence",
+        "timestamp": "33:29-33:30",
+        "description": "Low transcription confidence, text may be inaccurate"
+      },
+      {
+        "type": "low_confidence",
+        "timestamp": "33:41-33:44",
+        "description": "Low transcription confidence, text may be inaccurate"
+      }
+    ]
+  },
+  "summary": {
+    "topic_count": 9,
+    "decision_count": 4,
+    "action_item_count": 5,
+    "question_count": 5
+  },
+  "topics": [
+    {
+      "title": "Message Source Service",
+      "description": "The message source service is used to translate terminology from low-side languages to high-side languages like French and German.",
+      "speakers": [
+        "Speaker 1"
+      ],
+      "first_mentioned": "03:17"
+    },
+    {
+      "title": "Bookings Page Testing",
+      "description": "The bookings page does not need to know about the alert details, just that there's a space for a view context and some data.",
+      "speakers": [
+        "Speaker 1"
+      ],
+      "first_mentioned": "03:42"
+    },
+    {
+      "title": "Create and Edit Pages",
+      "description": "The create and edit pages have similar components including headers, questions, buttons, and JavaScript/data, requiring nested structures for testing.",
+      "speakers": [
+        "Speaker 1"
+      ],
+      "first_mentioned": "04:18"
+    },
+    {
+      "title": "UI Controllers",
+      "description": "The UI controller has too much responsibility and should pass information through different layers to tidy it up, improving testing.",
+      "speakers": [
+        "Speaker 1"
+      ],
+      "first_mentioned": "06:04"
+    },
+    {
+      "title": "Shared Components",
+      "description": "There is a case for abstracting common components like classification banner, top navigation, and footer into shared repositories.",
+      "speakers": [
+        "Speaker 1"
+      ],
+      "first_mentioned": "09:37"
+    },
+    {
+      "title": "Bookings Page Refactor",
+      "description": "The bookings page has been refactored to accept a page title and use view components for better testing.",
+      "speakers": [
+        "Speaker 1"
+      ],
+      "first_mentioned": "10:24"
+    },
+    {
+      "title": "Top nav and footer discussion",
+      "description": "Discussion about the top navigation and footer components in the application.",
+      "speakers": [
+        "Speaker 1"
+      ],
+      "first_mentioned": "18:51"
+    },
+    {
+      "title": "Shared UI and JTE",
+      "description": "Explanation of shared UI components and their implementation in JTE.",
+      "speakers": [
+        "Speaker 1",
+        "Speaker 3"
+      ],
+      "first_mentioned": "19:26"
+    },
+    {
+      "title": "Code snippets for component creation",
+      "description": "Introduction to using code snippets for creating new components efficiently.",
+      "speakers": [
+        "Speaker 1"
+      ],
+      "first_mentioned": "23:08"
+    }
+  ],
+  "decisions": [
+    {
+      "decision": "Strip out create pages into their components for easier testing.",
+      "speaker": "Speaker 1",
+      "timestamp": "05:12"
+    },
+    {
+      "decision": "Presentation logic should sit in view components, not controllers.",
+      "speaker": "Speaker 1",
+      "timestamp": "06:46"
+    },
+    {
+      "decision": "The approach works in bookings first, then we can start extracting shared stuff.",
+      "speaker": "Speaker 3",
+      "timestamp": "20:23"
+    },
+    {
+      "decision": "Go down the route of using ICDS as a component and other common components for date picking etc.",
+      "speaker": "Speaker 1",
+      "timestamp": "21:45"
+    }
+  ],
+  "action_items": [
+    {
+      "task": "Bolt in common components like classification banner into the application with minimal changes.",
+      "speaker": "Speaker 1",
+      "deadline": null,
+      "timestamp": "09:09"
+    },
+    {
+      "task": "Abstract top navigation and footer into shared components.",
+      "speaker": "Speaker 1",
+      "deadline": null,
+      "timestamp": "10:08"
+    },
+    {
+      "task": "Extract common UI components like HTMX utilities, main layout, classification component, and footer into a shared repository.",
+      "speaker": "Speaker 1",
+      "deadline": null,
+      "timestamp": "18:21"
+    },
+    {
+      "task": "Push branch with view component implementation",
+      "speaker": "Speaker 1",
+      "deadline": null,
+      "timestamp": "22:39"
+    },
+    {
+      "task": "Work on spring application events for future tech session",
+      "speaker": "Speaker 1",
+      "deadline": null,
+      "timestamp": "32:05"
+    }
+  ],
+  "questions": [
+    {
+      "question": "Can you hear me okay?",
+      "asker": "Speaker 2",
+      "timestamp": "12:01",
+      "answer": "I can, yeah.",
+      "answerer": "Speaker 1",
+      "answer_timestamp": "12:03"
+    },
+    {
+      "question": "Sort of there maybe wasn't components before or um you're breaking out further into sort of more like generic modular reusable components to then make testing make it yeah it's it's it's probably a bit more of the latter",
+      "asker": "Speaker 2",
+      "timestamp": "12:08",
+      "answer": "We've broken down the UI into smaller pieces but not using view component technology. Moving to view components would allow testing individual parts without loading all values.",
+      "answerer": "Speaker 1",
+      "answer_timestamp": "13:56"
+    },
+    {
+      "question": "Do you think that eventually sort of taking this approach they'll be able to like extract some things that are common to all like Otis apps?",
+      "asker": "Speaker 2",
+      "timestamp": "17:07",
+      "answer": "Yes, shared UI components should be pulled out into a shared repository.",
+      "answerer": "Speaker 1",
+      "answer_timestamp": "18:45"
+    },
+    {
+      "question": "Any other questions?",
+      "asker": "Speaker 1",
+      "timestamp": "20:07",
+      "answer": null,
+      "answerer": null,
+      "answer_timestamp": null
+    },
+    {
+      "question": "Any questions on the view component bit?",
+      "asker": "Speaker 1",
+      "timestamp": "22:43",
+      "answer": null,
+      "answerer": null,
+      "answer_timestamp": null
+    }
+  ],
+  "filename": "meeting-2026-03-25-230128.md"
+}

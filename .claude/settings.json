@@ -1,0 +1,17 @@
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/check-tasks.sh",
+            "timeout": 5,
+            "statusMessage": "Checking tasks..."
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,436 @@
+{
+  "metadata": {
+    "meeting_date": "2026-03-25",
+    "meeting_time": "22:35",
+    "duration": "29m 42s",
+    "speakers": 3,
+    "audio_file": "C:\\Users\\PC\\projects\\Meeting\\testAudioFiles\\30mins.mp4",
+    "processing_date": "2026-03-25T22:35:59",
+    "whisper_model": "large-v3",
+    "llm_model": "qwen2.5-coder:32b",
+    "quality_flags": [
+      {
+        "type": "low_confidence",
+        "timestamp": "01:44-01:46",
+        "description": "Low transcription confidence, text may be inaccurate"
+      },
+      {
+        "type": "low_confidence",
+        "timestamp": "02:36-02:38",
+        "description": "Low transcription confidence, text may be inaccurate"
+      },
+      {
+        "type": "low_confidence",
+        "timestamp": "05:21-05:21",
+        "description": "Low transcription confidence, text may be inaccurate"
+      },
+      {
+        "type": "low_confidence",
+        "timestamp": "10:37-10:40",
+        "description": "Low transcription confidence, text may be inaccurate"
+      },
+      {
+        "type": "low_confidence",
+        "timestamp": "12:17-12:18",
+        "description": "Low transcription confidence, text may be inaccurate"
+      },
+      {
+        "type": "low_confidence",
+        "timestamp": "12:21-12:21",
+        "description": "Low transcription confidence, text may be inaccurate"
+      },
+      {
+        "type": "low_confidence",
+        "timestamp": "12:54-12:57",
+        "description": "Low transcription confidence, text may be inaccurate"
+      },
+      {
+        "type": "low_confidence",
+        "timestamp": "13:12-13:12",
+        "description": "Low transcription confidence, text may be inaccurate"
+      },
+      {
+        "type": "low_confidence",
+        "timestamp": "13:31-13:32",
+        "description": "Low transcription confidence, text may be inaccurate"
+      },
+      {
+        "type": "low_confidence",
+        "timestamp": "14:22-14:23",
+        "description": "Low transcription confidence, text may be inaccurate"
+      },
+      {
+        "type": "low_confidence",
+        "timestamp": "14:48-14:49",
+        "description": "Low transcription confidence, text may be inaccurate"
+      },
+      {
+        "type": "low_confidence",
+        "timestamp": "16:30-17:25",
+        "description": "Low transcription confidence, text may be inaccurate"
+      },
+      {
+        "type": "low_confidence",
+        "timestamp": "17:57-18:02",
+        "description": "Low transcription confidence, text may be inaccurate"
+      },
+      {
+        "type": "low_confidence",
+        "timestamp": "21:03-21:09",
+        "description": "Low transcription confidence, text may be inaccurate"
+      },
+      {
+        "type": "low_confidence",
+        "timestamp": "21:35-21:38",
+        "description": "Low transcription confidence, text may be inaccurate"
+      },
+      {
+        "type": "low_confidence",
+        "timestamp": "21:55-21:56",
+        "description": "Low transcription confidence, text may be inaccurate"
+      },
+      {
+        "type": "low_confidence",
+        "timestamp": "28:11-28:12",
+        "description": "Low transcription confidence, text may be inaccurate"
+      },
+      {
+        "type": "low_confidence",
+        "timestamp": "28:20-28:20",
+        "description": "Low transcription confidence, text may be inaccurate"
+      },
+      {
+        "type": "low_confidence",
+        "timestamp": "29:28-29:31",
+        "description": "Low transcription confidence, text may be inaccurate"
+      },
+      {
+        "type": "low_confidence",
+        "timestamp": "29:33-29:33",
+        "description": "Low transcription confidence, text may be inaccurate"
+      },
+      {
+        "type": "long_silence",
+        "timestamp": "01:59-02:20",
+        "description": "Long silence gap (21 seconds)"
+      },
+      {
+        "type": "long_silence",
+        "timestamp": "06:38-07:00",
+        "description": "Long silence gap (21 seconds)"
+      },
+      {
+        "type": "long_silence",
+        "timestamp": "12:21-12:34",
+        "description": "Long silence gap (13 seconds)"
+      },
+      {
+        "type": "long_silence",
+        "timestamp": "13:18-13:31",
+        "description": "Long silence gap (13 seconds)"
+      },
+      {
+        "type": "long_silence",
+        "timestamp": "13:32-13:50",
+        "description": "Long silence gap (18 seconds)"
+      },
+      {
+        "type": "long_silence",
+        "timestamp": "15:41-16:27",
+        "description": "Long silence gap (45 seconds)"
+      },
+      {
+        "type": "long_silence",
+        "timestamp": "16:34-17:24",
+        "description": "Long silence gap (49 seconds)"
+      },
+      {
+        "type": "long_silence",
+        "timestamp": "18:02-18:30",
+        "description": "Long silence gap (27 seconds)"
+      },
+      {
+        "type": "long_silence",
+        "timestamp": "18:30-18:43",
+        "description": "Long silence gap (13 seconds)"
+      },
+      {
+        "type": "long_silence",
+        "timestamp": "18:44-19:44",
+        "description": "Long silence gap (60 seconds)"
+      },
+      {
+        "type": "long_silence",
+        "timestamp": "20:21-20:47",
+        "description": "Long silence gap (26 seconds)"
+      },
+      {
+        "type": "long_silence",
+        "timestamp": "21:13-21:26",
+        "description": "Long silence gap (12 seconds)"
+      },
+      {
+        "type": "long_silence",
+        "timestamp": "25:13-27:01",
+        "description": "Long silence gap (107 seconds)"
+      },
+      {
+        "type": "long_silence",
+        "timestamp": "27:51-28:07",
+        "description": "Long silence gap (15 seconds)"
+      },
+      {
+        "type": "long_silence",
+        "timestamp": "28:20-28:39",
+        "description": "Long silence gap (18 seconds)"
+      }
+    ]
+  },
+  "summary": {
+    "topic_count": 16,
+    "decision_count": 4,
+    "action_item_count": 6,
+    "question_count": 6
+  },
+  "topics": [
+    {
+      "title": "Environment Variables in GitLab",
+      "description": "The application can get environment variables stored from GitLab.",
+      "speakers": [
+        "Speaker 1"
+      ],
+      "first_mentioned": "00:00"
+    },
+    {
+      "title": "Feature Flags in GitLab",
+      "description": "GitLab allows storing feature flags for different environments.",
+      "speakers": [
+        "Speaker 1"
+      ],
+      "first_mentioned": "00:05"
+    },
+    {
+      "title": "Unleash Proxy",
+      "description": "The Unleash proxy is used to manage feature flags.",
+      "speakers": [
+        "Speaker 1"
+      ],
+      "first_mentioned": "00:12"
+    },
+    {
+      "title": "Priority of Task",
+      "description": "The task is wanted but not the most important on the list.",
+      "speakers": [
+        "Speaker 1"
+      ],
+      "first_mentioned": "00:26"
+    },
+    {
+      "title": "Otis Application",
+      "description": "Otis already does something similar for bookings and Oren application.",
+      "speakers": [
+        "Speaker 1"
+      ],
+      "first_mentioned": "00:34"
+    },
+    {
+      "title": "Local MySQL Database",
+      "description": "The team is moving to a local MySQL database instance.",
+      "speakers": [
+        "Speaker 2"
+      ],
+      "first_mentioned": "01:04"
+    },
+    {
+      "title": "Deployment Model with Argo CD",
+      "description": "Current OPM deployment model uses Argo CD and Helm charts.",
+      "speakers": [
+        "Speaker 1"
+      ],
+      "first_mentioned": "02:20"
+    },
+    {
+      "title": "MySQL Dump for Seed Data",
+      "description": "A MySQL dump from a low-side path instance is available as seed data.",
+      "speakers": [
+        "Speaker 2"
+      ],
+      "first_mentioned": "04:19"
+    },
+    {
+      "title": "Helm Charts for Application and MySQL",
+      "description": "Helm charts need to be created for the application and MySQL database.",
+      "speakers": [
+        "Speaker 1"
+      ],
+      "first_mentioned": "04:36"
+    },
+    {
+      "title": "Libcharts for Similar Deployments",
+      "description": "Libcharts can be used for similar deployments like Otis and Bookings.",
+      "speakers": [
+        "Speaker 1"
+      ],
+      "first_mentioned": "05:49"
+    },
+    {
+      "title": "MVP Timeline",
+      "description": "The team aims to have an MVP ready by the end of the fiscal year.",
+      "speakers": [
+        "Speaker 2"
+      ],
+      "first_mentioned": "21:38"
+    },
+    {
+      "title": "IMTT Replacement",
+      "description": "Stakeholders and users have been wanting an IMT replacement for years.",
+      "speakers": [
+        "Speaker 2"
+      ],
+      "first_mentioned": "22:19"
+    },
+    {
+      "title": "Team Experience",
+      "description": "The team is new to OPM, having joined in April of the current year and working on this project since July or December.",
+      "speakers": [
+        "Speaker 2"
+      ],
+      "first_mentioned": "22:40"
+    },
+    {
+      "title": "Reusable Assets",
+      "description": "There are reusable assets that can be used, but they will need to be tweaked based on the app's needs.",
+      "speakers": [
+        "Speaker 1"
+      ],
+      "first_mentioned": "23:38"
+    },
+    {
+      "title": "Build Status",
+      "description": "The build is in progress and needs to be pushed to the image registry once complete.",
+      "speakers": [
+        "Speaker 1"
+      ],
+      "first_mentioned": "27:01"
+    },
+    {
+      "title": "Helm Charts and Config",
+      "description": "There will be two repositories for Helm charts and config, and a demo on Argo CD will be given once the app is stood up.",
+      "speakers": [
+        "Speaker 1"
+      ],
+      "first_mentioned": "28:39"
+    }
+  ],
+  "decisions": [
+    {
+      "decision": "Use libcharts for this application if it fits.",
+      "speaker": "Speaker 1",
+      "timestamp": "08:43"
+    },
+    {
+      "decision": "Get something up and running by the end of this week.",
+      "speaker": "Speaker 1",
+      "timestamp": "11:02"
+    },
+    {
+      "decision": "Show progress towards MVP in this FY",
+      "speaker": "Speaker 2",
+      "timestamp": "22:05"
+    },
+    {
+      "decision": "Use reusable assets but tweak them based on app needs",
+      "speaker": "Speaker 1",
+      "timestamp": "23:44"
+    }
+  ],
+  "action_items": [
+    {
+      "task": "Write a Helm chart for the MySQL instance.",
+      "speaker": "Speaker 1",
+      "deadline": null,
+      "timestamp": "03:49"
+    },
+    {
+      "task": "Write a Helm chart for the application itself.",
+      "speaker": "Speaker 1",
+      "deadline": null,
+      "timestamp": "05:22"
+    },
+    {
+      "task": "Share screen and go through the application setup.",
+      "speaker": "Speaker 2",
+      "deadline": "early doors next week",
+      "timestamp": "10:04"
+    },
+    {
+      "task": "Get the build into the image registry once it's there",
+      "speaker": "Speaker 1",
+      "deadline": null,
+      "timestamp": "27:08"
+    },
+    {
+      "task": "Whip some Helm Shards together and deploy to Loci PaaS",
+      "speaker": "Speaker 1",
+      "deadline": null,
+      "timestamp": "27:33"
+    },
+    {
+      "task": "Ask James about where the Otis apps need to be set up",
+      "speaker": "Speaker 1",
+      "deadline": null,
+      "timestamp": "28:07"
+    }
+  ],
+  "questions": [
+    {
+      "question": "How familiar are you both with low-side paths?",
+      "asker": "Speaker 2",
+      "timestamp": "01:36",
+      "answer": null,
+      "answerer": null,
+      "answer_timestamp": null
+    },
+    {
+      "question": "Are you aware of anything that you will need, like any seed data, any users, anything like that?",
+      "asker": "Speaker 1",
+      "timestamp": "03:52",
+      "answer": "Got a MySQL dump out of like the low side, one of the low side paths, process power instances.",
+      "answerer": "Speaker 2",
+      "answer_timestamp": "04:03"
+    },
+    {
+      "question": "Do you know how simple or complex the template for the deployment needs to be?",
+      "asker": "Speaker 1",
+      "timestamp": "07:00",
+      "answer": null,
+      "answerer": null,
+      "answer_timestamp": null
+    },
+    {
+      "question": "When do you think you'd have capacity for that?",
+      "asker": "Speaker 2",
+      "timestamp": "09:14",
+      "answer": "I can probably get something working by the end of tomorrow.",
+      "answerer": "Speaker 1",
+      "answer_timestamp": "10:24"
+    },
+    {
+      "question": "Where do those things like live in GitLab world?",
+      "asker": "Speaker 2",
+      "timestamp": "11:27",
+      "answer": null,
+      "answerer": null,
+      "answer_timestamp": null
+    },
+    {
+      "question": "How's that build looking?",
+      "asker": "Speaker 2",
+      "timestamp": "25:38",
+      "answer": "We kind of need one to run through and if it doesn't push then we need to look at the logs, but. At this point doing that until it has finished really.",
+      "answerer": "Speaker 1",
+      "answer_timestamp": "27:01"
+    }
+  ],
+  "filename": "meeting-2026-03-25-223559.md"
+}

@@ -1,0 +1,165 @@
+import { useEffect, useRef, useState } from 'react';
+import type { Job, NoteSummary } from '@/types';
+import { api } from '@/api';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { Progress } from '@/components/ui/progress';
+import { FileText, Loader2 } from 'lucide-react';
+
+interface Props {
+  onSelect: (filename: string) => void;
+  onUpload: () => void;
+}
+
+/** Map a progress string to an estimated percentage. */
+function estimateProgress(progress: string): number {
+  const lower = progress.toLowerCase();
+  if (lower.includes('validat')) return 5;
+  if (lower.includes('reading file')) return 8;
+  if (lower.includes('extracting audio')) return 12;
+  if (lower.includes('preparing audio')) return 12;
+  if (lower.includes('loading whisper')) return 18;
+  if (lower.includes('voice activity')) return 22;
+  if (lower.includes('transcribing')) return 35;
+  if (lower.includes('aligning')) return 55;
+  if (lower.includes('identifying speaker') || lower.includes('diariz')) return 65;
+  if (lower.includes('quality')) return 72;
+  if (lower.includes('checking ollama')) return 75;
+  if (lower.includes('llm extraction')) {
+    const match = progress.match(/chunk (\d+)\/(\d+)/);
+    if (match) {
+      const [, current, total] = match;
+      return 78 + Math.round((parseInt(current) / parseInt(total)) * 15);
+    }
+    return 80;
+  }
+  if (lower.includes('generating')) return 95;
+  if (lower.includes('saving')) return 97;
+  if (lower.includes('complete')) return 100;
+  return 10;
+}
+
+export default function NotesList({ onSelect, onUpload }: Props) {
+  const [notes, setNotes] = useState<NoteSummary[]>([]);
+  const [activeJobs, setActiveJobs] = useState<Job[]>([]);
+  const [loading, setLoading] = useState(true);
+  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  // Fetch notes and active jobs on mount
+  useEffect(() => {
+    Promise.all([api.listNotes(), api.listJobs()])
+      .then(([notesList, jobsList]) => {
+        setNotes(notesList);
+        setActiveJobs(jobsList);
+        setLoading(false);
+      })
+      .catch(() => setLoading(false));
+  }, []);
+
+  // Poll for active jobs
+  useEffect(() => {
+    if (activeJobs.length === 0 && !loading) return;
+
+    const poll = async () => {
+      try {
+        const jobs = await api.listJobs();
+        setActiveJobs(jobs);
+        // Refresh notes list when a job completes (jobs disappear from active list)
+        if (jobs.length < activeJobs.length) {
+          const notesList = await api.listNotes();
+          setNotes(notesList);
+        }
+        if (jobs.length === 0) {
+          if (pollRef.current) {
+            clearInterval(pollRef.current);
+            pollRef.current = null;
+          }
+        }
+      } catch {
+        // ignore polling errors
+      }
+    };
+
+    pollRef.current = setInterval(poll, 2000);
+    return () => {
+      if (pollRef.current) {
+        clearInterval(pollRef.current);
+        pollRef.current = null;
+      }
+    };
+  }, [activeJobs.length, loading]);
+
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-2xl font-semibold">Meeting Notes</h1>
+        <Button onClick={onUpload}>+ Process New Recording</Button>
+      </div>
+
+      {loading && <div className="text-center py-16 text-muted-foreground">Loading...</div>}
+
+      {!loading && activeJobs.length > 0 && (
+        <div className="grid gap-3 mb-4">
+          {activeJobs.map((job) => {
+            const pct = estimateProgress(job.progress);
+            return (
+              <Card key={job.job_id} className="border-primary/30 bg-primary/[0.03]">
+                <CardContent>
+                  <div className="flex items-center gap-3 mb-2">
+                    <Loader2 className="h-4 w-4 animate-spin text-primary shrink-0" />
+                    <span className="text-[15px] font-medium">
+                      Processing: {job.source_filename}
+                    </span>
+                    <span className="ml-auto text-xs text-muted-foreground">{pct}%</span>
+                  </div>
+                  <Progress value={pct} className="h-2" />
+                  <p className="text-xs text-muted-foreground mt-1.5">{job.progress}</p>
+                </CardContent>
+              </Card>
+            );
+          })}
+        </div>
+      )}
+
+      {!loading && notes.length === 0 && activeJobs.length === 0 && (
+        <div className="text-center py-16">
+          <FileText className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+          <p className="text-lg text-muted-foreground">No meeting notes yet.</p>
+          <p className="text-muted-foreground">Upload a recording to get started.</p>
+        </div>
+      )}
+
+      {!loading && notes.length > 0 && (
+        <div className="grid gap-3">
+          {notes.map((n) => (
+            <Card
+              key={n.filename}
+              className="cursor-pointer transition-all hover:ring-2 hover:ring-primary/30 hover:shadow-md"
+              onClick={() => onSelect(n.filename)}
+            >
+              <CardContent>
+                <div className="flex justify-between items-baseline gap-3">
+                  <span className="text-[17px] font-semibold">
+                    {new Date(n.meeting_date + 'T00:00:00').toLocaleDateString('en-US', {
+                      weekday: 'short',
+                      year: 'numeric',
+                      month: 'long',
+                      day: 'numeric',
+                    })}
+                    {n.meeting_time && ` at ${n.meeting_time}`}
+                  </span>
+                  <span className="text-sm text-muted-foreground">{n.duration}</span>
+                </div>
+                <div className="flex gap-4 mt-1.5 text-[13px] text-muted-foreground">
+                  <span>{n.speakers} speaker{n.speakers !== 1 ? 's' : ''}</span>
+                  <span>{n.topic_count} topic{n.topic_count !== 1 ? 's' : ''}</span>
+                  <span>{n.action_item_count} action item{n.action_item_count !== 1 ? 's' : ''}</span>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}

@@ -1,0 +1,31 @@
+# CLAUDE.md
+
+## Project
+
+Local AI meeting notes app with React frontend and FastAPI backend. Transcribes recordings with speaker diarization, extracts structured notes via LLM. Python 3.10+, api/ layout.
+
+## Commands
+
+- `pip install -e ".[api]"` — install with API deps
+- `meeting-notes serve` — start the API server (default `127.0.0.1:9000`)
+- `meeting-notes serve --reload` — dev mode with hot-reload (WatchFiles); do NOT kill/restart after code changes
+- `meeting-notes serve --database-url "postgresql://user:pass@host/db"` — connect to external database
+- `PYTHONUTF8=1 python -X utf8` — required on Windows for direct python invocations
+
+## Gotchas
+
+- WhisperX 3.8 changed APIs: `DiarizationPipeline` lives at `whisperx.diarize`, not top-level `whisperx`. Uses `token=` not `use_auth_token=`.
+- pyannote model is gated — requires HuggingFace token + accepting terms at huggingface.co/pyannote/speaker-diarization-community-1
+- `ffprobe` path: don't derive from ffmpeg path with string replace — use `shutil.which("ffprobe")` (Windows paths break naive replacement)
+- torch/torchvision/torchaudio must be installed together with CUDA index (`pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu128`), pip defaults to CPU-only. Mismatched versions cause circular import errors in torchvision.
+- torchcodec warnings on Windows are harmless — pyannote falls back to ffmpeg for audio loading
+- Ollama model default is `qwen2.5-coder:32b` (not `qwen2.5:32b` which isn't pulled locally)
+- In-memory SQLite (`sqlite:///:memory:`) requires `StaticPool` — already configured in `create_db_engine()`.
+
+## Architecture
+
+Pipeline: `cli.py` → `pipeline.py` → `audio.py` → `transcribe.py` → `quality.py` → `llm.py`/`prompts.py`/`extractor.py` → `markdown.py`. Pipeline outputs both `.md` (human-readable) and `.json` sidecar (structured data). After processing, structured data is saved directly to the database from the extraction results (not from parsing markdown). API layer: `api.py` (FastAPI endpoints + background job runner), `server.py` (uvicorn entry point), and `db.py` (SQLAlchemy Core database layer). Data is stored in a database (SQLite by default, configurable for PostgreSQL). API reads exclusively from DB. All in `api/`, flat structure, no sub-packages. Config is a dataclass in `config.py` (defaults < YAML file < CLI flags). No Pydantic. Frontend is React + Vite + TypeScript in `frontend/`.
+
+## Frontend
+
+React 19 + Vite 8 + TypeScript (strict) in `frontend/`. Tailwind CSS v4 + shadcn/ui for styling. Components in `src/components/`, shadcn primitives in `src/components/ui/`. API client in `src/api.ts`, types in `src/types.ts`. Uses `@/` path alias. Vite proxies `/api/*` and `/jobs/*` to `localhost:9000`.

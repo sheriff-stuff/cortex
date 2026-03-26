@@ -1,0 +1,40 @@
+[build-system]
+requires = ["setuptools>=68.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "meeting-notes"
+version = "0.1.0"
+description = "Local AI tool that transcribes meeting recordings and extracts structured notes"
+requires-python = ">=3.10"
+dependencies = [
+    "click>=8.1",
+    "rich>=13.0",
+    "pyyaml>=6.0",
+    "requests>=2.31",
+    "pydub>=0.25",
+    "imageio-ffmpeg>=0.4",
+    "whisperx>=3.1",
+    "torchvision>=0.23",
+]
+
+[project.optional-dependencies]
+api = [
+    "fastapi>=0.104",
+    "uvicorn[standard]>=0.24",
+    "python-multipart>=0.0.6",
+    "sse-starlette>=1.6",
+    "sqlalchemy>=2.0",
+]
+postgres = [
+    "psycopg2-binary>=2.9",
+]
+
+[project.scripts]
+meeting-notes = "api.cli:main"
+meeting-notes-api = "api.server:serve"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["api*"]
+
