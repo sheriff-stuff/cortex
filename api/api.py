@@ -1,7 +1,6 @@
 """REST API layer over the meeting notes pipeline."""
 
 import asyncio
-import re
 import shutil
 import tempfile
 import uuid
@@ -43,28 +42,6 @@ def _format_action_detail(item: dict) -> str:
         return f"{base} ({ts})" if base else ts
     return base
 
-
-def _parse_transcript(markdown: str | None) -> list[dict]:
-    """Extract transcript segments from markdown content."""
-    if not markdown:
-        return []
-    section_match = re.search(
-        r"## Full Transcript\s*\n(.*?)(?=\n## |\n---|\Z)", markdown, re.DOTALL
-    )
-    if not section_match:
-        return []
-    segments = []
-    for m in re.finditer(
-        r"\*\*\[(\d{2}:\d{2}:\d{2})\]\s+(.+?):\*\*\s*\n(.+?)(?=\n\*\*\[|\Z)",
-        section_match.group(1),
-        re.DOTALL,
-    ):
-        segments.append({
-            "timestamp": m.group(1),
-            "speaker": m.group(2).strip(),
-            "text": m.group(3).strip(),
-        })
-    return segments
 
 
 def _response_from_sidecar(sidecar: dict, filename: str) -> dict:
@@ -285,8 +262,19 @@ def create_app(config: Config | None = None) -> FastAPI:
             raise HTTPException(status_code=404, detail="Note not found")
 
         result = _response_from_sidecar(db_meeting, filename)
-        result["transcript"] = _parse_transcript(db_meeting.get("markdown_content"))
         meeting_id = repo.get_meeting_id_by_filename(filename)
+        if meeting_id:
+            segments = repo.get_transcript_segments(meeting_id)
+            result["transcript"] = [
+                {
+                    "timestamp": f"{int(s.start // 3600):02d}:{int(s.start % 3600 // 60):02d}:{int(s.start % 60):02d}",
+                    "speaker": s.speaker,
+                    "text": s.text,
+                }
+                for s in segments
+            ]
+        else:
+            result["transcript"] = []
         result["speaker_names"] = repo.get_speaker_names(meeting_id) if meeting_id else {}
         return result
 

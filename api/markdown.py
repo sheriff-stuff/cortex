@@ -207,7 +207,7 @@ def build_sidecar_dict(
 
 
 def write_output(
-    content: str, source_file: Path, output_dir: Path,
+    content: str, output_dir: Path,
 ) -> Path:
     """Write Markdown content to output file. Returns the output path."""
     output_dir.mkdir(parents=True, exist_ok=True)
