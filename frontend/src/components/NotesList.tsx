@@ -11,32 +11,47 @@ interface Props {
   onUpload: () => void;
 }
 
-/** Map a progress string to an estimated percentage. */
+function formatMeetingDate(dateStr: string, timeStr?: string): string {
+  const formatted = new Date(dateStr + 'T00:00:00').toLocaleDateString('en-US', {
+    weekday: 'short',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  });
+  return timeStr ? `${formatted} at ${timeStr}` : formatted;
+}
+
+/** Map a progress string to an estimated percentage.
+ *  Phase 1 (transcription) maps to 0-50%, Phase 2 (summary) maps to 50-100%.
+ */
 function estimateProgress(progress: string): number {
   const lower = progress.toLowerCase();
-  if (lower.includes('validat')) return 5;
-  if (lower.includes('reading file')) return 8;
-  if (lower.includes('extracting audio')) return 12;
-  if (lower.includes('preparing audio')) return 12;
-  if (lower.includes('loading whisper')) return 18;
-  if (lower.includes('voice activity')) return 22;
-  if (lower.includes('transcribing')) return 35;
-  if (lower.includes('aligning')) return 55;
-  if (lower.includes('identifying speaker') || lower.includes('diariz')) return 65;
-  if (lower.includes('quality')) return 72;
-  if (lower.includes('checking ollama')) return 75;
+  // Phase 1: Transcription (0-50%)
+  if (lower.includes('validat')) return 3;
+  if (lower.includes('reading file')) return 5;
+  if (lower.includes('extracting audio') || lower.includes('preparing audio')) return 8;
+  if (lower.includes('loading whisper')) return 12;
+  if (lower.includes('voice activity')) return 16;
+  if (lower.includes('transcribing')) return 25;
+  if (lower.includes('aligning')) return 35;
+  if (lower.includes('identifying speaker') || lower.includes('diariz')) return 42;
+  if (lower.includes('quality')) return 47;
+  if (lower.includes('saving transcript')) return 50;
+  // Phase 2: Summary (50-100%)
+  if (lower.includes('checking ollama')) return 52;
   if (lower.includes('llm extraction')) {
     const match = progress.match(/chunk (\d+)\/(\d+)/);
     if (match) {
       const [, current, total] = match;
-      return 78 + Math.round((parseInt(current) / parseInt(total)) * 15);
+      return 55 + Math.round((parseInt(current) / parseInt(total)) * 35);
     }
-    return 80;
+    return 60;
   }
-  if (lower.includes('generating')) return 95;
-  if (lower.includes('saving')) return 97;
+  if (lower.includes('ollama not available') || lower.includes('summary skipped')) return 100;
+  if (lower.includes('generating')) return 92;
+  if (lower.includes('saving')) return 96;
   if (lower.includes('complete')) return 100;
-  return 10;
+  return 5;
 }
 
 export default function NotesList({ onSelect, onUpload }: Props) {
@@ -92,7 +107,7 @@ export default function NotesList({ onSelect, onUpload }: Props) {
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-semibold">Meeting Notes</h1>
+        <h1 className="text-2xl font-semibold">Notes</h1>
         <Button onClick={onUpload}>+ Process New Recording</Button>
       </div>
 
@@ -124,7 +139,7 @@ export default function NotesList({ onSelect, onUpload }: Props) {
       {!loading && notes.length === 0 && activeJobs.length === 0 && (
         <div className="text-center py-16">
           <FileText className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-          <p className="text-lg text-muted-foreground">No meeting notes yet.</p>
+          <p className="text-lg text-muted-foreground">No notes yet.</p>
           <p className="text-muted-foreground">Upload a recording to get started.</p>
         </div>
       )}
@@ -140,13 +155,7 @@ export default function NotesList({ onSelect, onUpload }: Props) {
               <CardContent>
                 <div className="flex justify-between items-baseline gap-3">
                   <span className="text-[17px] font-semibold">
-                    {new Date(n.meeting_date + 'T00:00:00').toLocaleDateString('en-US', {
-                      weekday: 'short',
-                      year: 'numeric',
-                      month: 'long',
-                      day: 'numeric',
-                    })}
-                    {n.meeting_time && ` at ${n.meeting_time}`}
+                    {formatMeetingDate(n.meeting_date, n.meeting_time)}
                   </span>
                   <span className="text-sm text-muted-foreground">{n.duration}</span>
                 </div>

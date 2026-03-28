@@ -1,5 +1,7 @@
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
+import type { TemplateSummary } from '@/types';
 import { cn } from '@/lib/utils';
+import { api } from '@/api';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { X, Upload } from 'lucide-react';
@@ -18,7 +20,7 @@ function isValidFile(file: File): boolean {
 }
 
 interface Props {
-  onUpload: (file: File) => void;
+  onUpload: (file: File, templateId?: number) => void;
   uploading: boolean;
 }
 
@@ -27,6 +29,17 @@ export default function UploadPage({ onUpload, uploading }: Props) {
   const [dragOver, setDragOver] = useState(false);
   const [error, setError] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
+
+  const [templates, setTemplates] = useState<TemplateSummary[]>([]);
+  const [selectedTemplateId, setSelectedTemplateId] = useState<number | undefined>();
+
+  useEffect(() => {
+    api.listTemplates().then((list) => {
+      setTemplates(list);
+      const def = list.find((t) => t.is_default);
+      if (def) setSelectedTemplateId(def.id);
+    });
+  }, []);
 
   const handleFile = useCallback((f: File) => {
     if (!isValidFile(f)) {
@@ -66,8 +79,8 @@ export default function UploadPage({ onUpload, uploading }: Props) {
   return (
     <div className="flex flex-col items-center gap-6 py-8">
       <div className="text-center">
-        <h1 className="text-2xl font-semibold mb-2">Process a Meeting Recording</h1>
-        <p className="text-muted-foreground">Upload an audio or video file to generate structured meeting notes</p>
+        <h1 className="text-2xl font-semibold mb-2">Process a Recording</h1>
+        <p className="text-muted-foreground">Upload an audio or video file to generate structured notes</p>
       </div>
 
       <div
@@ -90,7 +103,7 @@ export default function UploadPage({ onUpload, uploading }: Props) {
           type="file"
           accept={ACCEPTED.join(',')}
           onChange={onInputChange}
-          style={{ display: 'none' }}
+          className="hidden"
         />
       </div>
 
@@ -115,10 +128,28 @@ export default function UploadPage({ onUpload, uploading }: Props) {
         </div>
       )}
 
+      {/* Template selector */}
+      {templates.length > 0 && (
+        <div className="w-full max-w-[560px]">
+          <label className="text-sm font-medium block mb-1">Extraction Template</label>
+          <select
+            value={selectedTemplateId ?? ''}
+            onChange={(e) => setSelectedTemplateId(Number(e.target.value))}
+            className="w-full px-3 py-2 rounded-md border bg-background text-sm"
+          >
+            {templates.map((t) => (
+              <option key={t.id} value={t.id}>
+                {t.name}{t.is_default ? ' (Default)' : ''}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
+
       <Button
         size="lg"
         disabled={!file || uploading}
-        onClick={() => file && onUpload(file)}
+        onClick={() => file && onUpload(file, selectedTemplateId)}
         className="min-w-[160px]"
       >
         {uploading ? 'Uploading...' : 'Process'}
