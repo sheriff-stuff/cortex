@@ -137,7 +137,7 @@ def process_meeting(file_path: Path, config: Config, no_llm: bool = False) -> Pa
                 quality_flags=quality_flags,
                 config=config,
             )
-            output_path = write_output(content, file_path, output_dir, sidecar=sidecar)
+            output_path = write_output(content, output_dir)
 
             # Step 9: Save to database
             progress.update(main_task, description="Saving to database...")

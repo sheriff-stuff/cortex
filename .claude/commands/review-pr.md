@@ -1,0 +1,27 @@
+Find the open PR associated with the current branch and review all comments left by reviewers.
+
+## Before starting
+
+Check if the PR branch has merge conflicts with the base branch. If there are conflicts, resolve them first before addressing any comments.
+
+## For each comment:
+
+1. **Assess** whether the feedback is valid and worth fixing, or whether it's a nitpick/incorrect/not applicable.
+
+2. **If worth fixing**: Make the code change on the current branch, then reply to the comment on GitHub tagging the reviewer (e.g. "@reviewer Fixed — removed the unused parameter, good catch.").
+
+3. **If NOT worth fixing**: Reply to the comment on GitHub tagging the reviewer with a polite, constructive explanation of why you disagree or why the change isn't necessary. Be respectful but direct — don't just agree for the sake of it. Back up your reasoning with specifics (e.g. "@reviewer I think this is fine as-is because...").
+
+## Comment formatting
+
+Every comment and reply you post on the PR MUST start with:
+
+> 🤖 *beep boop — this is Claude, not a human*
+
+This makes it clear the response was AI-generated, not from the repo owner.
+
+## After handling all comments
+
+Push the changes (if any). Then leave a single top-level comment on the PR summarizing what was done — list which comments were addressed with fixes and which were pushed back on, with brief reasoning. This gives the reviewer a quick overview without needing to re-read every thread.
+
+Finally, give me a summary of what you fixed vs what you pushed back on.

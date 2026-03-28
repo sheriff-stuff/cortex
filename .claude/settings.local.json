@@ -42,7 +42,12 @@
       "Bash(pkill -f \"vite\")",
       "Bash(pkill -f \"meeting-notes\")",
       "Bash(pkill -f uvicorn)",
-      "Bash(pkill -f vite)"
+      "Bash(pkill -f vite)",
+      "Bash(/c/Users/PC/AppData/Local/Programs/Python/Python312/python.exe --version 2>&1)",
+      "Bash(bash -c 'if ! command -v python &>/dev/null; then echo \"python not on PATH\"; _winpy=$\\(where.exe python 2>/dev/null | head -1 | tr -d \"\\\\r\"\\); echo \"where.exe found: $_winpy\"; _pydir=$\\(cd \"$\\(dirname \"$_winpy\"\\)\" && pwd\\); echo \"pydir: $_pydir\"; export PATH=\"$_pydir:$_pydir/Scripts:$PATH\"; echo \"PATH now includes python?\"; command -v python; python --version; pip --version; meeting-notes --help 2>&1 | head -1; else echo \"python already on PATH\"; fi')",
+      "Bash(bash -l -c 'command -v python && echo found || echo \"\"not found\"\"')",
+      "Bash(bash -c 'command -v python && echo found || echo \"\"not found\"\"')",
+      "Bash(gh auth:*)"
     ]
   }
 }

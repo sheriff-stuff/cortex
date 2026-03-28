@@ -1,6 +1,5 @@
 """Render final Markdown output with YAML frontmatter."""
 
-import json
 from datetime import datetime
 from pathlib import Path
 
@@ -95,17 +94,6 @@ def render(
         _render_action_items(lines, extraction)
         _render_questions(lines, extraction)
         _render_keywords(lines, extraction)
-
-    # --- Full Transcript ---
-    lines.append("---")
-    lines.append("")
-    lines.append("## Full Transcript")
-    lines.append("")
-    for seg in transcript.segments:
-        ts = _format_timestamp(seg.start)
-        lines.append(f"**[{ts}] {seg.speaker}:**  ")
-        lines.append(seg.text)
-        lines.append("")
 
     # --- Quality Notes ---
     if quality_flags:
@@ -231,11 +219,7 @@ def build_sidecar_dict(
     quality_flags: list[QualityFlag],
     config: Config,
 ) -> dict:
-    """Build a JSON-serializable dict with structured meeting data.
-
-    This is written alongside the markdown as a .json sidecar file so the API
-    can read structured data directly instead of regex-parsing markdown.
-    """
+    """Build a JSON-serializable dict with structured meeting data for database storage."""
     now = datetime.now()
     metadata = _build_metadata(
         now, source_file, duration, transcript, extraction, quality_flags, config,
@@ -259,7 +243,7 @@ def build_sidecar_dict(
 
 
 def write_output(
-    content: str, source_file: Path, output_dir: Path, sidecar: dict | None = None,
+    content: str, output_dir: Path,
 ) -> Path:
     """Write Markdown content to output file. Returns the output path."""
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -267,12 +251,4 @@ def write_output(
     filename = f"meeting-{now.strftime('%Y-%m-%d-%H%M%S')}.md"
     output_path = output_dir / filename
     output_path.write_text(content, encoding="utf-8")
-
-    if sidecar is not None:
-        sidecar["filename"] = output_path.name
-        json_path = output_path.with_suffix(".json")
-        json_path.write_text(
-            json.dumps(sidecar, indent=2, ensure_ascii=False), encoding="utf-8",
-        )
-
     return output_path
