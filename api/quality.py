@@ -4,6 +4,10 @@ from dataclasses import dataclass
 
 from api.transcribe import TranscriptResult
 
+MIN_CONFIDENCE = 0.5
+OVERLAP_TOLERANCE_SECONDS = 0.5
+SILENCE_GAP_THRESHOLD_SECONDS = 10.0
+
 
 @dataclass
 class QualityFlag:
@@ -39,7 +43,7 @@ def _check_low_confidence(result: TranscriptResult, flags: list[QualityFlag]) ->
     low_conf_end = None
 
     for seg in result.segments:
-        if seg.confidence < 0.5:
+        if seg.confidence < MIN_CONFIDENCE:
             if low_conf_start is None:
                 low_conf_start = seg.start
             low_conf_end = seg.end
@@ -68,7 +72,7 @@ def _check_overlapping_speech(result: TranscriptResult, flags: list[QualityFlag]
     for i in range(len(segments) - 1):
         curr = segments[i]
         nxt = segments[i + 1]
-        if curr.speaker != nxt.speaker and curr.end > nxt.start + 0.5:
+        if curr.speaker != nxt.speaker and curr.end > nxt.start + OVERLAP_TOLERANCE_SECONDS:
             overlap_start = nxt.start
             overlap_end = min(curr.end, nxt.end)
             flags.append(QualityFlag(
@@ -84,7 +88,7 @@ def _check_silence_gaps(result: TranscriptResult, flags: list[QualityFlag]) -> N
         curr = result.segments[i]
         nxt = result.segments[i + 1]
         gap = nxt.start - curr.end
-        if gap > 10.0:
+        if gap > SILENCE_GAP_THRESHOLD_SECONDS:
             flags.append(QualityFlag(
                 type="long_silence",
                 timestamp=_format_range(curr.end, nxt.start),

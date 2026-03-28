@@ -2,6 +2,7 @@
 
 import json
 import re
+import warnings
 from dataclasses import dataclass, field
 from typing import Callable
 
@@ -13,10 +14,12 @@ from api.transcribe import Segment
 
 @dataclass
 class ExtractionResult:
+    overview: str = ""
     topics: list[dict] = field(default_factory=list)
     decisions: list[dict] = field(default_factory=list)
     action_items: list[dict] = field(default_factory=list)
     questions: list[dict] = field(default_factory=list)
+    keywords: list[str] = field(default_factory=list)
 
 
 def parse_llm_response(response: str) -> dict:
@@ -102,22 +105,38 @@ def _deduplicate_items(items: list[dict], text_key: str, time_threshold: float =
 
 def merge_extractions(chunk_results: list[dict]) -> ExtractionResult:
     """Merge and deduplicate extraction results from multiple chunks."""
+    overview = ""
     all_topics = []
     all_decisions = []
     all_action_items = []
     all_questions = []
+    all_keywords: list[str] = []
 
     for result in chunk_results:
+        if not overview and result.get("overview"):
+            overview = result["overview"]
         all_topics.extend(result.get("topics", []))
         all_decisions.extend(result.get("decisions", []))
         all_action_items.extend(result.get("action_items", []))
         all_questions.extend(result.get("questions", []))
+        all_keywords.extend(result.get("keywords", []))
+
+    # Deduplicate keywords (case-insensitive)
+    seen_kw: set[str] = set()
+    unique_keywords: list[str] = []
+    for kw in all_keywords:
+        lower = kw.lower()
+        if lower not in seen_kw:
+            seen_kw.add(lower)
+            unique_keywords.append(kw)
 
     return ExtractionResult(
+        overview=overview,
         topics=_deduplicate_items(all_topics, "title"),
         decisions=_deduplicate_items(all_decisions, "decision"),
         action_items=_deduplicate_items(all_action_items, "task"),
         questions=_deduplicate_items(all_questions, "question"),
+        keywords=unique_keywords,
     )
 
 
@@ -125,6 +144,7 @@ def extract_from_transcript(
     segments: list[Segment],
     config: Config,
     progress_callback: Callable[[int, int], None] | None = None,
+    prompt_text: str | None = None,
 ) -> ExtractionResult:
     """Run full extraction pipeline: chunk -> LLM -> parse -> merge."""
     chunks = chunk_transcript(segments, config)
@@ -135,7 +155,7 @@ def extract_from_transcript(
             progress_callback(i + 1, len(chunks))
 
         transcript_text = format_transcript_for_llm(chunk)
-        prompt = build_extraction_prompt(transcript_text)
+        prompt = build_extraction_prompt(transcript_text, prompt_text=prompt_text)
 
         # Try up to 2 times
         for attempt in range(2):
@@ -147,7 +167,6 @@ def extract_from_transcript(
             except (ValueError, json.JSONDecodeError) as e:
                 if attempt == 1:
                     # Second failure: skip this chunk with warning
-                    import warnings
                     warnings.warn(
                         f"Failed to parse LLM response for chunk {i + 1}: {e}"
                     )

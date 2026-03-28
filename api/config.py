@@ -29,20 +29,19 @@ def load_config(
 ) -> Config:
     """Load config with priority: defaults < YAML file < CLI overrides."""
     config = Config()
+    valid_fields = {fld.name for fld in fields(Config)}
 
     # Load YAML config file
     yaml_path = config_path or DEFAULT_CONFIG_PATH
     if yaml_path.exists():
         with open(yaml_path) as f:
             yaml_data = yaml.safe_load(f) or {}
-        valid_fields = {fld.name for fld in fields(Config)}
         for key, value in yaml_data.items():
             if key in valid_fields and value is not None:
                 setattr(config, key, value)
 
     # Apply CLI overrides (non-None values win)
     if cli_overrides:
-        valid_fields = {fld.name for fld in fields(Config)}
         for key, value in cli_overrides.items():
             if key in valid_fields and value is not None:
                 setattr(config, key, value)

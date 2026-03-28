@@ -1,8 +1,14 @@
 """Run the meeting-notes API server."""
 
+import warnings
 from pathlib import Path
 
 import click
+
+# Suppress harmless torchcodec/pyannote warnings on Windows
+# (pyannote falls back to ffmpeg for audio loading)
+warnings.filterwarnings("ignore", message="torchcodec is not installed correctly")
+warnings.filterwarnings("ignore", category=UserWarning, module="pyannote.audio.utils.reproducibility")
 
 
 @click.command()
@@ -41,7 +47,7 @@ def serve(host, port, config_path, database_url, reload):
     else:
         config = load_config(
             config_path=Path(config_path) if config_path else None,
-            cli_overrides=cli_overrides or None,
+            cli_overrides=cli_overrides,
         )
         app = create_app(config)
         uvicorn.run(app, host=host, port=port)
