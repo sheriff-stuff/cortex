@@ -1,0 +1,1 @@
+Never commit directly to master. Always pull the latest master and create a feature branch before making changes. Before creating a merge/pull request, pull the latest master and rebase onto it. Merge via PR.
