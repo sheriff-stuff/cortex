@@ -127,7 +127,7 @@ def run_pipeline(
             quality_flags=quality_flags,
             config=config,
         )
-        output_path = write_output(content, file_path, output_dir, sidecar=sidecar)
+        output_path = write_output(content, file_path, output_dir)
         job.notes_markdown = content
 
         # Step 9: Persist to database
