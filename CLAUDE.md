@@ -21,10 +21,13 @@ Local AI meeting notes app with React frontend and FastAPI backend. Transcribes 
 - torchcodec warnings on Windows are harmless — pyannote falls back to ffmpeg for audio loading
 - Ollama model default is `qwen2.5-coder:32b` (not `qwen2.5:32b` which isn't pulled locally)
 - In-memory SQLite (`sqlite:///:memory:`) requires `StaticPool` — already configured in `create_db_engine()`.
+- No inline migration code in `db.py`: when schema changes are made, update `migration/SCHEMA.md` to match and run `python migration/migrate.py` to bring the live DB up to date. Never delete user data.
 
 ## Architecture
 
-Pipeline: `cli.py` → `pipeline.py` → `audio.py` → `transcribe.py` → `quality.py` → `llm.py`/`prompts.py`/`extractor.py` → `markdown.py`. Pipeline outputs both `.md` (human-readable) and `.json` sidecar (structured data). After processing, structured data is saved directly to the database from the extraction results (not from parsing markdown). API layer: `api.py` (FastAPI endpoints + background job runner), `server.py` (uvicorn entry point), and `db.py` (SQLAlchemy Core database layer). Data is stored in a database (SQLite by default, configurable for PostgreSQL). API reads exclusively from DB. All in `api/`, flat structure, no sub-packages. Config is a dataclass in `config.py` (defaults < YAML file < CLI flags). No Pydantic. Frontend is React + Vite + TypeScript in `frontend/`.
+Two-phase pipeline in `jobs.py`: **Phase 1 (transcription)**: `audio.py` → `transcribe.py` → `quality.py` → save transcript to DB. **Phase 2 (summary)**: load transcript from `transcript_segments` table → `extractor.py`/`llm.py` → update meeting with extraction results. Phase 2 auto-chains after Phase 1 but fails gracefully (transcript survives if Ollama is down). `POST /jobs/{job_id}/resummarize` re-runs Phase 2 with a different template. CLI pipeline in `pipeline.py` still runs as a single pass. Pipeline outputs both `.md` (human-readable) and `.json` sidecar (structured data). After processing, structured data is saved directly to the database from the extraction results (not from parsing markdown). API layer: `api.py` (FastAPI endpoints + background job runner), `server.py` (uvicorn entry point), and `db.py` (SQLAlchemy Core database layer). Data is stored in a database (SQLite by default, configurable for PostgreSQL). API reads exclusively from DB. All in `api/`, flat structure, no sub-packages. Config is a dataclass in `config.py` (defaults < YAML file < CLI flags). No Pydantic. Frontend is React + Vite + TypeScript in `frontend/`.
+
+Custom templates are instructions only — no placeholders needed. `build_extraction_prompt()` in `prompts.py` assembles the final prompt: transcript + schema + instructions.
 
 ## Frontend
 

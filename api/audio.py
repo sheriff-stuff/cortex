@@ -46,7 +46,7 @@ def extract_audio(file_path: Path, work_dir: Path) -> Path:
 
     Returns path to a WAV file ready for transcription.
     """
-    file_type = validate_input(file_path)
+    validate_input(file_path)
     ffmpeg = get_ffmpeg_path()
 
     # If already WAV, use directly
@@ -78,15 +78,23 @@ def extract_audio(file_path: Path, work_dir: Path) -> Path:
 
 
 def get_ffprobe_path() -> str:
-    """Find ffprobe binary alongside ffmpeg."""
+    """Find ffprobe binary: prefer system install, fallback to imageio-ffmpeg."""
     system_ffprobe = shutil.which("ffprobe")
     if system_ffprobe:
         return system_ffprobe
-    # Derive from ffmpeg path by replacing just the filename
-    ffmpeg = get_ffmpeg_path()
-    ffmpeg_path = Path(ffmpeg)
-    ffprobe_name = ffmpeg_path.name.replace("ffmpeg", "ffprobe")
-    return str(ffmpeg_path.parent / ffprobe_name)
+    try:
+        import imageio_ffmpeg
+        candidate = Path(imageio_ffmpeg.get_ffmpeg_exe()).parent / "ffprobe"
+        if candidate.exists():
+            return str(candidate)
+    except ImportError:
+        pass
+    raise FileNotFoundError(
+        "ffprobe not found. Install ffmpeg via:\n"
+        "  Windows: winget install ffmpeg\n"
+        "  macOS:   brew install ffmpeg\n"
+        "  Linux:   sudo apt install ffmpeg"
+    )
 
 
 def get_duration(file_path: Path) -> float:

@@ -1,53 +1,106 @@
-import type { Job, MeetingNotes, NoteSummary, SpeakerNameMap } from './types';
+import type { ActionItem, Decision, Job, MeetingNotes, NoteSummary, Question, SpeakerNameMap, TemplateDetail, TemplateSummary, Topic } from './types';
 
-async function upload(file: File): Promise<{ job_id: string }> {
+/** Shared fetch wrapper with consistent error handling. */
+async function fetchApi<T>(url: string, init?: RequestInit): Promise<T> {
+  const res = await fetch(url, init);
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({ detail: res.statusText }));
+    throw new Error(body.detail || res.statusText);
+  }
+  return res.json();
+}
+
+function jsonBody(data: unknown): RequestInit {
+  return { headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) };
+}
+
+// --- Jobs ---
+
+async function upload(file: File, templateId?: number): Promise<{ job_id: string }> {
   const form = new FormData();
   form.append('file', file);
-  const res = await fetch('/jobs', { method: 'POST', body: form });
-  if (!res.ok) throw new Error(`Upload failed: ${res.statusText}`);
-  return res.json();
+  if (templateId != null) form.append('template_id', String(templateId));
+  return fetchApi('/jobs', { method: 'POST', body: form });
 }
 
-async function getJob(jobId: string): Promise<Job> {
-  const res = await fetch(`/jobs/${jobId}`);
-  if (!res.ok) throw new Error(`Failed to get job: ${res.statusText}`);
-  return res.json();
+function getJob(jobId: string): Promise<Job> {
+  return fetchApi(`/jobs/${jobId}`);
 }
 
-async function listJobs(): Promise<Job[]> {
-  const res = await fetch('/jobs');
-  if (!res.ok) throw new Error(`Failed to list jobs: ${res.statusText}`);
-  return res.json();
+function listJobs(): Promise<Job[]> {
+  return fetchApi('/jobs');
 }
 
-async function listNotes(): Promise<NoteSummary[]> {
-  const res = await fetch('/api/notes');
-  if (!res.ok) throw new Error(`Failed to list notes: ${res.statusText}`);
-  return res.json();
+function resummarize(jobId: string, templateId?: number): Promise<{ job_id: string }> {
+  const params = templateId != null ? `?template_id=${templateId}` : '';
+  return fetchApi(`/jobs/${jobId}/resummarize${params}`, { method: 'POST' });
 }
 
-async function getSavedNotes(filename: string): Promise<MeetingNotes> {
-  const res = await fetch(`/api/notes/${encodeURIComponent(filename)}`);
-  if (!res.ok) throw new Error(`Failed to get notes: ${res.statusText}`);
-  return res.json();
+// --- Notes ---
+
+function listNotes(): Promise<NoteSummary[]> {
+  return fetchApi('/api/notes');
+}
+
+function getSavedNotes(filename: string): Promise<MeetingNotes> {
+  return fetchApi(`/api/notes/${encodeURIComponent(filename)}`);
 }
 
 async function getSpeakers(filename: string): Promise<SpeakerNameMap> {
-  const res = await fetch(`/api/notes/${encodeURIComponent(filename)}/speakers`);
-  if (!res.ok) throw new Error(`Failed to get speakers: ${res.statusText}`);
-  const data = await res.json();
+  const data = await fetchApi<{ speaker_names: SpeakerNameMap }>(
+    `/api/notes/${encodeURIComponent(filename)}/speakers`,
+  );
   return data.speaker_names;
 }
 
 async function saveSpeakers(filename: string, speakerNames: SpeakerNameMap): Promise<SpeakerNameMap> {
-  const res = await fetch(`/api/notes/${encodeURIComponent(filename)}/speakers`, {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ speaker_names: speakerNames }),
-  });
-  if (!res.ok) throw new Error(`Failed to save speakers: ${res.statusText}`);
-  const data = await res.json();
+  const data = await fetchApi<{ speaker_names: SpeakerNameMap }>(
+    `/api/notes/${encodeURIComponent(filename)}/speakers`,
+    { method: 'PUT', ...jsonBody({ speaker_names: speakerNames }) },
+  );
   return data.speaker_names;
 }
 
-export const api = { upload, getJob, listJobs, listNotes, getSavedNotes, getSpeakers, saveSpeakers };
+// --- Templates ---
+
+function listTemplates(): Promise<TemplateSummary[]> {
+  return fetchApi('/api/templates');
+}
+
+function getTemplate(id: number): Promise<TemplateDetail> {
+  return fetchApi(`/api/templates/${id}`);
+}
+
+function createTemplate(data: { name: string; description: string; prompt_text: string }): Promise<TemplateDetail> {
+  return fetchApi('/api/templates', { method: 'POST', ...jsonBody(data) });
+}
+
+function updateTemplate(id: number, data: Partial<{ name: string; description: string; prompt_text: string }>): Promise<TemplateDetail> {
+  return fetchApi(`/api/templates/${id}`, { method: 'PUT', ...jsonBody(data) });
+}
+
+function deleteTemplate(id: number): Promise<void> {
+  return fetchApi(`/api/templates/${id}`, { method: 'DELETE' });
+}
+
+function duplicateTemplate(id: number): Promise<TemplateDetail> {
+  return fetchApi(`/api/templates/${id}/duplicate`, { method: 'POST' });
+}
+
+function renderExample(promptText: string): Promise<{
+  topics: Topic[];
+  decisions: Decision[];
+  action_items: ActionItem[];
+  questions: Question[];
+}> {
+  return fetchApi('/api/templates/render-example', {
+    method: 'POST',
+    ...jsonBody({ prompt_text: promptText }),
+  });
+}
+
+export const api = {
+  upload, getJob, listJobs, listNotes, getSavedNotes, getSpeakers, saveSpeakers,
+  listTemplates, getTemplate, createTemplate, updateTemplate, deleteTemplate, duplicateTemplate,
+  renderExample, resummarize,
+};

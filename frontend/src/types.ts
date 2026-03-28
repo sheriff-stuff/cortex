@@ -35,6 +35,7 @@ export interface NoteSummaryCount {
 export interface Topic {
   title: string;
   description: string;
+  key_points?: string[];
 }
 
 export interface Decision {
@@ -62,8 +63,11 @@ export interface TranscriptSegment {
 
 export interface MeetingNotes {
   filename: string;
+  job_id?: string | null;
   metadata: NoteMetadata;
   summary: NoteSummaryCount;
+  overview?: string;
+  keywords?: string[];
   topics: Topic[];
   decisions: Decision[];
   action_items: ActionItem[];
@@ -75,3 +79,17 @@ export interface MeetingNotes {
 export type SpeakerNameMap = Record<string, string>;
 
 export type AppState = 'home' | 'uploading' | 'viewing' | 'error';
+
+export interface TemplateSummary {
+  id: number;
+  name: string;
+  description: string;
+  is_default: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface TemplateDetail extends TemplateSummary {
+  prompt_text: string;
+  schema: string;
+}

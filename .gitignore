@@ -20,3 +20,6 @@ meeting-notes-e2e.db
 meeting-notes.db
 test-results/
 playwright-report/
+testAudioFiles/
+meeting-notes/
+.docs/otterAI/
