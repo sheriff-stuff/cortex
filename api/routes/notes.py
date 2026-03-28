@@ -3,7 +3,7 @@
 from fastapi import APIRouter, HTTPException
 
 from api.db import MeetingRepository
-from api.responses import check_filename, parse_transcript, response_from_sidecar
+from api.responses import check_filename, response_from_sidecar
 
 
 def create_router(repo: MeetingRepository) -> APIRouter:
@@ -24,8 +24,19 @@ def create_router(repo: MeetingRepository) -> APIRouter:
             raise HTTPException(status_code=404, detail="Note not found")
 
         result = response_from_sidecar(db_meeting, filename)
-        result["transcript"] = parse_transcript(db_meeting.get("markdown_content"))
         meeting_id = repo.get_meeting_id_by_filename(filename)
+        if meeting_id:
+            segments = repo.get_transcript_segments(meeting_id)
+            result["transcript"] = [
+                {
+                    "timestamp": f"{int(s.start // 3600):02d}:{int(s.start % 3600 // 60):02d}:{int(s.start % 60):02d}",
+                    "speaker": s.speaker,
+                    "text": s.text,
+                }
+                for s in segments
+            ]
+        else:
+            result["transcript"] = []
         result["speaker_names"] = repo.get_speaker_names(meeting_id) if meeting_id else {}
         return result
 

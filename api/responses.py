@@ -2,6 +2,10 @@
 
 import re
 
+from fastapi import HTTPException
+
+from api.jobs import Job
+
 
 def format_detail(*parts: str) -> str:
     """Join non-empty parts with ', '. Returns '' if all parts are empty."""
@@ -97,8 +101,6 @@ def response_from_sidecar(sidecar: dict, filename: str) -> dict:
 
 def job_status_dict(source) -> dict:
     """Build a job status dict from either an in-memory Job or a DB row dict."""
-    from api.jobs import Job
-
     if isinstance(source, Job):
         result = {
             "job_id": source.id,
@@ -126,7 +128,5 @@ def job_status_dict(source) -> dict:
 
 def check_filename(filename: str) -> None:
     """Raise 400 if filename looks like a path traversal."""
-    from fastapi import HTTPException
-
     if "/" in filename or "\\" in filename or ".." in filename:
         raise HTTPException(status_code=400, detail="Invalid filename")
