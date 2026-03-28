@@ -21,3 +21,5 @@ meeting-notes.db
 test-results/
 playwright-report/
 testAudioFiles/
+meeting-notes/
+.docs/otterAI/

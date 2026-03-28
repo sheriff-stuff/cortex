@@ -5,6 +5,18 @@ set -e
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$SCRIPT_DIR"
 
+# Ensure Python is on PATH (Windows: Git Bash may not see Python)
+if ! command -v python &>/dev/null; then
+    _winpy=$(where.exe python 2>/dev/null | head -1 | tr -d '\r')
+    if [ -n "$_winpy" ]; then
+        _pydir=$(cd "$(dirname "$_winpy")" && pwd)
+        export PATH="$_pydir:$_pydir/Scripts:$PATH"
+    else
+        echo "Error: Python not found. Please install Python and ensure it's on your PATH."
+        exit 1
+    fi
+fi
+
 # Colors for log prefixes
 RED='\033[0;31m'
 BLUE='\033[0;34m'
@@ -25,7 +37,7 @@ trap cleanup SIGINT SIGTERM EXIT
 
 # --- Install dependencies ---
 echo -e "${GREEN}[setup]${NC} Installing backend dependencies..."
-pip install -e ".[api]" --quiet 2>&1
+python -m pip install -e ".[api]" --quiet 2>&1
 
 echo -e "${GREEN}[setup]${NC} Installing frontend dependencies..."
 (cd frontend && npm install --silent) 2>&1
