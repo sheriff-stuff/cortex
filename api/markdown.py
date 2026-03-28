@@ -28,6 +28,34 @@ def _format_timestamp(seconds: float) -> str:
     return f"{h:02d}:{m:02d}:{s:02d}"
 
 
+def _build_metadata(
+    now: datetime,
+    source_file: Path,
+    duration: float,
+    transcript: TranscriptResult,
+    extraction: ExtractionResult | None,
+    quality_flags: list[QualityFlag],
+    config: Config,
+) -> dict:
+    """Build the metadata dict shared by render() and build_sidecar_dict()."""
+    meta = {
+        "meeting_date": now.strftime("%Y-%m-%d"),
+        "meeting_time": now.strftime("%H:%M"),
+        "duration": _format_duration(duration),
+        "speakers": transcript.speaker_count,
+        "audio_file": str(source_file.resolve()),
+        "processing_date": now.isoformat(timespec="seconds"),
+        "whisper_model": config.whisper_model,
+        "llm_model": config.llm_model if extraction else "none",
+    }
+    if quality_flags:
+        meta["quality_flags"] = [
+            {"type": f.type, "timestamp": f.timestamp, "description": f.description}
+            for f in quality_flags
+        ]
+    return meta
+
+
 def render(
     source_file: Path,
     duration: float,
@@ -41,21 +69,9 @@ def render(
     lines: list[str] = []
 
     # --- YAML frontmatter ---
-    frontmatter = {
-        "meeting_date": now.strftime("%Y-%m-%d"),
-        "meeting_time": now.strftime("%H:%M"),
-        "duration": _format_duration(duration),
-        "speakers": transcript.speaker_count,
-        "audio_file": str(source_file.resolve()),
-        "processing_date": now.isoformat(timespec="seconds"),
-        "whisper_model": config.whisper_model,
-        "llm_model": config.llm_model if extraction else "none",
-    }
-    if quality_flags:
-        frontmatter["quality_flags"] = [
-            {"type": f.type, "timestamp": f.timestamp, "description": f.description}
-            for f in quality_flags
-        ]
+    frontmatter = _build_metadata(
+        now, source_file, duration, transcript, extraction, quality_flags, config,
+    )
 
     lines.append("---")
     lines.append(yaml.dump(frontmatter, default_flow_style=False, sort_keys=False).strip())
@@ -73,10 +89,12 @@ def render(
 
     # --- Structured summary (if LLM extraction was done) ---
     if extraction:
+        _render_overview(lines, extraction)
         _render_topics(lines, extraction)
         _render_decisions(lines, extraction)
         _render_action_items(lines, extraction)
         _render_questions(lines, extraction)
+        _render_keywords(lines, extraction)
 
     # --- Full Transcript ---
     lines.append("---")
@@ -115,6 +133,15 @@ def render(
     return "\n".join(lines)
 
 
+def _render_overview(lines: list[str], extraction: ExtractionResult) -> None:
+    if not extraction.overview:
+        return
+    lines.append("## Overview")
+    lines.append("")
+    lines.append(extraction.overview)
+    lines.append("")
+
+
 def _render_topics(lines: list[str], extraction: ExtractionResult) -> None:
     if not extraction.topics:
         return
@@ -122,9 +149,17 @@ def _render_topics(lines: list[str], extraction: ExtractionResult) -> None:
     lines.append("")
     for i, topic in enumerate(extraction.topics, 1):
         title = topic.get("title", "Unknown")
-        desc = topic.get("description", "")
-        lines.append(f"{i}. **{title}** - {desc}")
-    lines.append("")
+        lines.append(f"### {i}. {title}")
+        lines.append("")
+        key_points = topic.get("key_points", [])
+        if key_points:
+            for point in key_points:
+                lines.append(f"- {point}")
+        else:
+            desc = topic.get("description", "")
+            if desc:
+                lines.append(f"- {desc}")
+        lines.append("")
 
 
 def _render_decisions(lines: list[str], extraction: ExtractionResult) -> None:
@@ -177,6 +212,17 @@ def _render_questions(lines: list[str], extraction: ExtractionResult) -> None:
         lines.append("")
 
 
+def _render_keywords(lines: list[str], extraction: ExtractionResult) -> None:
+    if not extraction.keywords:
+        return
+    lines.append("---")
+    lines.append("")
+    lines.append("## Keywords")
+    lines.append("")
+    lines.append(", ".join(extraction.keywords))
+    lines.append("")
+
+
 def build_sidecar_dict(
     source_file: Path,
     duration: float,
@@ -191,21 +237,9 @@ def build_sidecar_dict(
     can read structured data directly instead of regex-parsing markdown.
     """
     now = datetime.now()
-    metadata = {
-        "meeting_date": now.strftime("%Y-%m-%d"),
-        "meeting_time": now.strftime("%H:%M"),
-        "duration": _format_duration(duration),
-        "speakers": transcript.speaker_count,
-        "audio_file": str(source_file.resolve()),
-        "processing_date": now.isoformat(timespec="seconds"),
-        "whisper_model": config.whisper_model,
-        "llm_model": config.llm_model if extraction else "none",
-    }
-    if quality_flags:
-        metadata["quality_flags"] = [
-            {"type": f.type, "timestamp": f.timestamp, "description": f.description}
-            for f in quality_flags
-        ]
+    metadata = _build_metadata(
+        now, source_file, duration, transcript, extraction, quality_flags, config,
+    )
 
     return {
         "metadata": metadata,
@@ -215,6 +249,8 @@ def build_sidecar_dict(
             "action_item_count": len(extraction.action_items) if extraction else 0,
             "question_count": len(extraction.questions) if extraction else 0,
         },
+        "overview": extraction.overview if extraction else "",
+        "keywords": extraction.keywords if extraction else [],
         "topics": extraction.topics if extraction else [],
         "decisions": extraction.decisions if extraction else [],
         "action_items": extraction.action_items if extraction else [],
