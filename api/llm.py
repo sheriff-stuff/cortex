@@ -1,4 +1,4 @@
-"""Ollama HTTP client and transcript chunking logic."""
+"""LLM HTTP client (Ollama + OpenAI-compatible) and transcript chunking logic."""
 
 import json
 from typing import Callable
@@ -7,6 +7,8 @@ import requests
 
 from api.config import Config
 from api.transcribe import Segment
+
+_SUPPORTED_PROVIDERS = ("ollama", "openai")
 
 
 def check_ollama(config: Config) -> bool:
@@ -51,6 +53,111 @@ def query_ollama(prompt: str, config: Config) -> str:
     )
     resp.raise_for_status()
     return resp.json().get("response", "")
+
+
+# --- OpenAI-compatible provider ---
+
+
+def _openai_headers(config: Config) -> dict:
+    """Build HTTP headers for OpenAI-compatible APIs."""
+    headers = {"Content-Type": "application/json"}
+    if config.llm_api_key:
+        headers["Authorization"] = f"Bearer {config.llm_api_key}"
+    return headers
+
+
+def check_openai(config: Config) -> bool:
+    """Check if an OpenAI-compatible API is reachable."""
+    try:
+        resp = requests.get(
+            f"{config.llm_base_url}/models",
+            headers=_openai_headers(config),
+            timeout=10,
+        )
+        # 200 = OK, 404/405 = endpoint not implemented but server is up
+        return resp.status_code in (200, 404, 405)
+    except requests.RequestException:
+        return False
+
+
+def check_openai_model_available(config: Config) -> bool:
+    """Check if the configured model exists on an OpenAI-compatible API.
+
+    Many servers (Azure, vLLM) don't implement GET /models, so 404/405
+    is treated as "assume available".
+    """
+    try:
+        resp = requests.get(
+            f"{config.llm_base_url}/models",
+            headers=_openai_headers(config),
+            timeout=10,
+        )
+        if resp.status_code in (404, 405):
+            return True
+        if resp.status_code != 200:
+            return False
+        models = resp.json().get("data", [])
+        return any(m.get("id") == config.llm_model for m in models)
+    except (requests.RequestException, json.JSONDecodeError):
+        return False
+
+
+def query_openai(prompt: str, config: Config) -> str:
+    """Send a prompt to an OpenAI-compatible chat completions endpoint."""
+    resp = requests.post(
+        f"{config.llm_base_url}/chat/completions",
+        headers=_openai_headers(config),
+        json={
+            "model": config.llm_model,
+            "messages": [{"role": "user", "content": prompt}],
+            "temperature": 0.1,
+            "max_tokens": 4096,
+        },
+        timeout=600,
+    )
+    resp.raise_for_status()
+    data = resp.json()
+    try:
+        return data["choices"][0]["message"]["content"]
+    except (KeyError, IndexError, TypeError) as exc:
+        raise ValueError(
+            f"Unexpected response format from {config.llm_base_url}: {str(data)[:500]}"
+        ) from exc
+
+
+# --- Provider dispatchers ---
+
+
+def _validate_provider(config: Config) -> str:
+    """Validate and return the configured LLM provider."""
+    provider = config.llm_provider
+    if provider not in _SUPPORTED_PROVIDERS:
+        raise ValueError(
+            f"Unsupported llm_provider '{provider}'. "
+            f"Supported: {', '.join(_SUPPORTED_PROVIDERS)}"
+        )
+    return provider
+
+
+def check_llm(config: Config) -> bool:
+    """Check if the configured LLM provider is reachable."""
+    if _validate_provider(config) == "openai":
+        return check_openai(config)
+    return check_ollama(config)
+
+
+def check_llm_model_available(config: Config) -> bool:
+    """Check if the configured model is available on the LLM provider."""
+    if _validate_provider(config) == "openai":
+        return check_openai_model_available(config)
+    return check_model_available(config)
+
+
+def query_llm(prompt: str, config: Config) -> str:
+    """Send a prompt to the configured LLM provider."""
+    if _validate_provider(config) == "openai":
+        return query_openai(prompt, config)
+    return query_ollama(prompt, config)
 
 
 def _estimate_tokens(text: str) -> int:

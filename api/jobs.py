@@ -136,17 +136,17 @@ def run_summary(
 ) -> None:
     """Phase 2: Run LLM extraction on stored transcript and update meeting."""
     from api.extractor import extract_from_transcript
-    from api.llm import check_model_available, check_ollama
+    from api.llm import check_llm, check_llm_model_available
     from api.markdown import build_sidecar_dict, render
     from api.quality import QualityFlag
     from api.transcribe import TranscriptResult
 
     repo.update_job(job.id, phase="summary")
 
-    # Check Ollama availability
-    job.push_event("Checking Ollama availability")
-    if not (check_ollama(config) and check_model_available(config)):
-        job.push_event("Ollama not available, skipping summary")
+    # Check LLM availability
+    job.push_event("Checking LLM availability")
+    if not (check_llm(config) and check_llm_model_available(config)):
+        job.push_event("LLM not available, skipping summary")
         return
 
     # Load transcript segments from DB

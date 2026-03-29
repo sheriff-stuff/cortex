@@ -1,0 +1,51 @@
+# Meeting Notes - Example Configuration
+# Copy to ~/.config/meeting-notes/config.yaml and edit as needed.
+# All values shown are defaults. Remove or comment out lines to use defaults.
+
+# --- LLM Provider ---
+# "ollama" for local Ollama, "openai" for any OpenAI-compatible API
+llm_provider: ollama
+
+# Model name (must match what's available on your provider)
+llm_model: qwen2.5-coder:32b
+
+# API key for external providers (not needed for Ollama)
+# Can also be set via MEETING_NOTES_LLM_API_KEY environment variable
+llm_api_key: ""
+
+# Base URL for OpenAI-compatible APIs (ignored when using Ollama)
+# Examples:
+#   OpenAI:       https://api.openai.com/v1
+#   Azure OpenAI: https://YOUR-RESOURCE.openai.azure.com/openai/deployments/YOUR-DEPLOYMENT/v1
+#                 Note: Azure may require api-version query param and api-key header;
+#                 check your Azure setup for OpenAI-compatibility details.
+#   vLLM:         http://localhost:8000/v1
+#   LiteLLM:      http://localhost:4000/v1
+#   Ollama (OpenAI compat): http://localhost:11434/v1
+llm_base_url: https://api.openai.com/v1
+
+# Ollama-specific URL (only used when llm_provider is "ollama")
+ollama_url: http://localhost:11434
+
+# --- Transcription ---
+whisper_model: large-v3
+whisper_device: cuda           # "cuda" for GPU, "cpu" for CPU-only
+whisper_compute_type: float16  # "float16" for GPU, "int8" for CPU
+
+# --- Chunking ---
+chunk_max_tokens: 3000
+chunk_overlap_seconds: 120.0
+
+# --- Database ---
+# SQLite (default, local file):
+database_url: "sqlite:///meeting-notes.db"
+# PostgreSQL:
+# database_url: "postgresql://user:password@host:5432/meeting_notes"
+# Can also be set via MEETING_NOTES_DATABASE_URL environment variable
+
+# --- HuggingFace ---
+# Required for speaker diarization (pyannote model is gated)
+hf_token: ""
+
+# --- Output ---
+default_output_dir: ./meeting-notes

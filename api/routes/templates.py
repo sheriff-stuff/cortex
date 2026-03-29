@@ -8,7 +8,7 @@ from api.config import Config
 from api.db import MeetingRepository
 from api.example_transcript import EXAMPLE_SEGMENTS
 from api.extractor import extract_from_transcript
-from api.llm import check_ollama
+from api.llm import check_llm
 from api.prompts import EXTRACTION_SCHEMA
 from api.responses import transform_items
 
@@ -53,10 +53,10 @@ def create_router(config: Config, repo: MeetingRepository) -> APIRouter:
         if not prompt_text:
             raise HTTPException(status_code=400, detail="prompt_text is required")
 
-        if not check_ollama(config):
+        if not check_llm(config):
             raise HTTPException(
                 status_code=503,
-                detail="Ollama is not available. Please ensure it is running.",
+                detail="LLM is not available. Check your provider configuration.",
             )
 
         try:
