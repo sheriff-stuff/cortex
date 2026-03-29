@@ -85,10 +85,12 @@ def _get_system_info() -> dict:
         if torch.cuda.is_available():
             info["cuda_version"] = torch.version.cuda or "unknown"
             info["gpu_name"] = torch.cuda.get_device_name(0)
-            gpu_mem = torch.cuda.get_device_properties(0).total_mem
+            gpu_mem = torch.cuda.get_device_properties(0).total_memory
             info["gpu_memory_gb"] = round(gpu_mem / (1024 ** 3), 1)
     except ImportError:
         info["torch"] = "not installed"
+    except Exception:
+        info.setdefault("torch", "installed (error collecting CUDA/GPU info)")
 
     # WhisperX
     try:
@@ -131,7 +133,8 @@ def _get_gpu_memory_peak_mb() -> float:
     return 0.0
 
 
-def benchmark_pipeline(file_path: Path, config: Config, no_llm: bool = False) -> dict:
+def benchmark_pipeline(file_path: Path, config: Config, no_llm: bool = False,
+                       save_to_db: bool = False) -> dict:
     """Run the full pipeline with detailed timing. Returns a benchmark report dict."""
     from api.audio import extract_audio, get_duration, validate_input
     from api.diarize import diarize, map_speaker_label, resolve_hf_token
@@ -224,9 +227,19 @@ def benchmark_pipeline(file_path: Path, config: Config, no_llm: bool = False) ->
                 from whisperx.diarize import DiarizationPipeline
 
                 with timer.stage("load_diarization_model"):
-                    diarize_model = DiarizationPipeline(
-                        token=hf_token, device=device,
-                    )
+                    try:
+                        diarize_model = DiarizationPipeline(
+                            token=hf_token, device=device,
+                        )
+                    except Exception as e:
+                        if "403" in str(e) or "gated" in str(e).lower() or "restricted" in str(e).lower():
+                            raise RuntimeError(
+                                "Cannot access the pyannote diarization model. You need to:\n"
+                                "1. Visit https://huggingface.co/pyannote/speaker-diarization-community-1\n"
+                                "2. Accept the user conditions\n"
+                                "3. Make sure your HuggingFace token is set (run: huggingface-cli login)"
+                            ) from e
+                        raise
 
                 with timer.stage("run_diarization"):
                     diarize_segments = diarize_model(audio)
@@ -303,6 +316,7 @@ def benchmark_pipeline(file_path: Path, config: Config, no_llm: bool = False) ->
 
                 chunk_results: list[dict] = []
                 prompt_sizes: list[int] = []
+                estimated_tokens: list[int] = []
 
                 for i, chunk in enumerate(chunks):
                     with timer.stage(f"chunk_{i + 1}", chunk_index=i + 1,
@@ -312,6 +326,7 @@ def benchmark_pipeline(file_path: Path, config: Config, no_llm: bool = False) ->
                             prompt = build_extraction_prompt(transcript_text)
                             prompt_size = len(prompt)
                             prompt_sizes.append(prompt_size)
+                            estimated_tokens.append(int(len(transcript_text.split()) * 1.3))
 
                         with timer.stage("query_ollama",
                                          prompt_chars=prompt_size) as ollama_rec:
@@ -328,10 +343,7 @@ def benchmark_pipeline(file_path: Path, config: Config, no_llm: bool = False) ->
                 llm_stats = {
                     "chunk_count": len(chunks),
                     "prompt_sizes_chars": prompt_sizes,
-                    "estimated_tokens_per_chunk": [
-                        int(len(p.split()) * 1.3) for p in
-                        [format_transcript_for_llm(c) for c in chunks]
-                    ],
+                    "estimated_tokens_per_chunk": estimated_tokens,
                 }
 
         # --- Stage 7: Render markdown ---
@@ -350,15 +362,16 @@ def benchmark_pipeline(file_path: Path, config: Config, no_llm: bool = False) ->
             )
             output_path = write_output(content, output_dir)
 
-        # --- Stage 9: Save to database ---
-        with timer.stage("save_to_database"):
-            from api.db import MeetingRepository, create_db_engine, init_db
-            engine = create_db_engine(config.database_url)
-            init_db(engine)
-            repo = MeetingRepository(engine)
-            sidecar.setdefault("filename", output_path.name)
-            if not repo.meeting_exists(sidecar["filename"]):
-                repo.save_meeting(sidecar, content)
+        # --- Stage 9: Save to database (opt-in) ---
+        if save_to_db:
+            with timer.stage("save_to_database"):
+                from api.db import MeetingRepository, create_db_engine, init_db
+                engine = create_db_engine(config.database_url)
+                init_db(engine)
+                repo = MeetingRepository(engine)
+                sidecar.setdefault("filename", output_path.name)
+                if not repo.meeting_exists(sidecar["filename"]):
+                    repo.save_meeting(sidecar, content)
 
     timer.root.end = time.perf_counter()
     mem_end = _get_process_memory_mb()

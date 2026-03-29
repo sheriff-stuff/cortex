@@ -89,8 +89,9 @@ def process(file, output_dir, whisper_model, llm_model, ollama_url, config_path,
 @click.option("--no-llm", is_flag=True, default=False, help="Skip LLM extraction, benchmark transcription only")
 @click.option("--hf-token", default=None, help="HuggingFace token for pyannote diarization model")
 @click.option("--json-output", "json_output", is_flag=True, default=False, help="Output JSON report instead of formatted text")
-@click.option("--output-report", type=click.Path(), default=None, help="Save report to file")
-def benchmark(file, output_dir, whisper_model, llm_model, ollama_url, config_path, no_llm, hf_token, json_output, output_report):
+@click.option("--output-report", type=click.Path(dir_okay=False, writable=True), default=None, help="Save report to file")
+@click.option("--save-db", is_flag=True, default=False, help="Save results to database (off by default for benchmarks)")
+def benchmark(file, output_dir, whisper_model, llm_model, ollama_url, config_path, no_llm, hf_token, json_output, output_report, save_db):
     """Benchmark the pipeline with detailed timing for each stage."""
     import json as json_module
 
@@ -123,25 +124,19 @@ def benchmark(file, output_dir, whisper_model, llm_model, ollama_url, config_pat
 
     try:
         console.print("\n[bold]Starting pipeline benchmark...[/]\n")
-        report = benchmark_pipeline(file_path, config, no_llm=no_llm)
+        report = benchmark_pipeline(file_path, config, no_llm=no_llm, save_to_db=save_db)
 
         if json_output:
             output_text = json_module.dumps(report, indent=2)
+            click.echo(output_text)
         else:
             output_text = format_report_text(report)
-
-        console.print(output_text)
+            console.print(output_text)
 
         if output_report:
             report_path = Path(output_report)
             report_path.write_text(output_text, encoding="utf-8")
             console.print(f"\n[bold green]Report saved to:[/] {report_path}")
-
-        # Always save JSON alongside for machine consumption
-        if not json_output and output_report:
-            json_path = Path(output_report).with_suffix(".json")
-            json_path.write_text(json_module.dumps(report, indent=2), encoding="utf-8")
-            console.print(f"[bold green]JSON report saved to:[/] {json_path}")
 
     except Exception as e:
         console.print(f"\n[bold red]Benchmark failed:[/] {e}")
