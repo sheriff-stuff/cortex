@@ -1,7 +1,5 @@
 """Response formatting helpers for the meeting notes API."""
 
-import re
-
 from fastapi import HTTPException
 
 from api.jobs import Job
@@ -26,29 +24,6 @@ def format_action_detail(item: dict) -> str:
     if ts:
         return f"{base} ({ts})" if base else ts
     return base
-
-
-def parse_transcript(markdown: str | None) -> list[dict]:
-    """Extract transcript segments from markdown content."""
-    if not markdown:
-        return []
-    section_match = re.search(
-        r"## Full Transcript\s*\n(.*?)(?=\n## |\n---|\Z)", markdown, re.DOTALL
-    )
-    if not section_match:
-        return []
-    segments = []
-    for m in re.finditer(
-        r"\*\*\[(\d{2}:\d{2}:\d{2})\]\s+(.+?):\*\*\s*\n(.+?)(?=\n\*\*\[|\Z)",
-        section_match.group(1),
-        re.DOTALL,
-    ):
-        segments.append({
-            "timestamp": m.group(1),
-            "speaker": m.group(2).strip(),
-            "text": m.group(3).strip(),
-        })
-    return segments
 
 
 def transform_items(topics: list, decisions: list, action_items: list, questions: list) -> dict:
