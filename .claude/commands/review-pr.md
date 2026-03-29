@@ -6,11 +6,16 @@ Check if the PR branch has merge conflicts with the base branch. If there are co
 
 ## For each comment:
 
-1. **Assess** whether the feedback is valid and worth fixing, or whether it's a nitpick/incorrect/not applicable.
+1. **Assess** whether the feedback is valid and worth fixing, or whether it's a nitpick/incorrect/not applicable. Also consider whether it's **in scope** for this PR.
 
-2. **If worth fixing**: Make the code change on the current branch, then reply to the comment on GitHub tagging the reviewer (e.g. "@reviewer Fixed — removed the unused parameter, good catch.").
+2. **If worth fixing (in scope)**: Make the code change on the current branch, then reply to the comment on GitHub tagging the reviewer (e.g. "@reviewer Fixed — removed the unused parameter, good catch.").
 
-3. **If NOT worth fixing**: Reply to the comment on GitHub tagging the reviewer with a polite, constructive explanation of why you disagree or why the change isn't necessary. Be respectful but direct — don't just agree for the sake of it. Back up your reasoning with specifics (e.g. "@reviewer I think this is fine as-is because...").
+3. **If valid but out of scope**: The feedback is correct, but fixing it here would go beyond the purpose of this PR (e.g. a pre-existing issue, a separate concern, or a feature request). In this case:
+   - Create a new branch off the PR branch (or master if more appropriate) and make the fix there.
+   - Open a separate PR for it.
+   - Reply to the comment on GitHub tagging the reviewer, explaining that it's out of scope for this PR but has been addressed separately, and link to the new PR (e.g. "@reviewer Good catch — this is a pre-existing issue outside the scope of this PR. Opened #42 to address it.").
+
+4. **If NOT worth fixing**: Reply to the comment on GitHub tagging the reviewer with a polite, constructive explanation of why you disagree or why the change isn't necessary. Be respectful but direct — don't just agree for the sake of it. Back up your reasoning with specifics (e.g. "@reviewer I think this is fine as-is because...").
 
 ## Comment formatting
 
@@ -22,6 +27,6 @@ This makes it clear the response was AI-generated, not from the repo owner.
 
 ## After handling all comments
 
-Push the changes (if any). Then leave a single top-level comment on the PR summarizing what was done — list which comments were addressed with fixes and which were pushed back on, with brief reasoning. This gives the reviewer a quick overview without needing to re-read every thread.
+Push the changes (if any). Then leave a single top-level comment on the PR summarizing what was done — list which comments were addressed with fixes, which were split into separate PRs (with links), and which were pushed back on, with brief reasoning. This gives the reviewer a quick overview without needing to re-read every thread.
 
-Finally, give me a summary of what you fixed vs what you pushed back on.
+Finally, give me a summary of what you fixed, what you spun off into separate PRs, and what you pushed back on.
