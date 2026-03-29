@@ -2,7 +2,8 @@ Find and review all open PRs created during this conversation. If no PRs were cr
 
 ## Before starting
 
-Check if the PR branch has merge conflicts with the base branch. If there are conflicts, resolve them first before addressing any comments.
+1. Check if the PR branch has merge conflicts with the base branch. If there are conflicts, resolve them first before addressing any comments.
+2. Check if any bots (e.g. Copilot coding agent) have opened PRs that duplicate work already done in this session. If so, comment explaining the work is already covered (link to the relevant PR) and close the duplicate.
 
 ## For each comment:
 
