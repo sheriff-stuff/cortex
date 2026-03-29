@@ -9,7 +9,16 @@ import {
   isValidFile,
 } from '@/utils';
 
-function makeMeetingNotes(overrides: Partial<MeetingNotes> = {}): MeetingNotes {
+interface MeetingNotesOverrides {
+  metadata?: Partial<MeetingNotes['metadata']>;
+  summary?: Partial<MeetingNotes['summary']>;
+  topics?: MeetingNotes['topics'];
+  decisions?: MeetingNotes['decisions'];
+  action_items?: MeetingNotes['action_items'];
+  questions?: MeetingNotes['questions'];
+}
+
+function makeMeetingNotes(overrides: MeetingNotesOverrides = {}): MeetingNotes {
   return {
     filename: 'test.md',
     metadata: {
@@ -66,7 +75,7 @@ describe('extractSpeakers', () => {
 
   it('backfills from metadata.speakers count', () => {
     const notes = makeMeetingNotes({
-      metadata: { speakers: 3 } as MeetingNotes['metadata'],
+      metadata: { speakers: 3 },
       topics: [{ title: 'T', description: 'Speaker 1 spoke' }],
     });
     const result = extractSpeakers(notes);
@@ -128,6 +137,14 @@ describe('applySpeakerNames', () => {
       'Alice and Alice',
     );
   });
+
+  it('handles overlapping speaker labels like "Speaker 1" and "Speaker 10"', () => {
+    const result = applySpeakerNames('Speaker 1 then Speaker 10 and Speaker 1 again', {
+      'Speaker 1': 'Alice',
+      'Speaker 10': 'Bob',
+    });
+    expect(result).toBe('Alice then Bob and Alice again');
+  });
 });
 
 // --- formatMeetingDate ---
@@ -178,22 +195,22 @@ describe('formatFileSize', () => {
 
 describe('isValidFile', () => {
   it.each(ACCEPTED_EXTENSIONS)('accepts %s files', (ext) => {
-    const file = { name: `recording${ext}` } as unknown as File;
+    const file = new File([], `recording${ext}`);
     expect(isValidFile(file)).toBe(true);
   });
 
   it.each(['.txt', '.pdf', '.exe'])('rejects %s files', (ext) => {
-    const file = { name: `file${ext}` } as unknown as File;
+    const file = new File([], `file${ext}`);
     expect(isValidFile(file)).toBe(false);
   });
 
   it('handles uppercase extensions', () => {
-    const file = { name: 'RECORDING.MP3' } as unknown as File;
+    const file = new File([], 'RECORDING.MP3');
     expect(isValidFile(file)).toBe(true);
   });
 
   it('rejects files with no extension', () => {
-    const file = { name: 'noext' } as unknown as File;
+    const file = new File([], 'noext');
     expect(isValidFile(file)).toBe(false);
   });
 });

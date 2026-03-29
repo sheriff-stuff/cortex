@@ -33,7 +33,8 @@ export function extractSpeakers(notes: MeetingNotes): string[] {
 export function applySpeakerNames(text: string, names: SpeakerNameMap): string {
   if (!text) return text;
   let result = text;
-  for (const [label, name] of Object.entries(names)) {
+  const entries = Object.entries(names).sort((a, b) => b[0].length - a[0].length);
+  for (const [label, name] of entries) {
     if (!name) continue;
     result = result.replaceAll(label, name);
   }
