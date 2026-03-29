@@ -115,8 +115,12 @@ Give me a summary of what you fixed, what you spun off into separate PRs, and wh
 
 ### Merge gate
 
-The PR **must not be merged** unless:
+**Never merge a PR automatically or without explicit user approval.** The final decision to merge is always the user's, not yours.
+
+When the following conditions are met:
 1. All reviewer comments are resolved (replied to, with fixes pushed)
 2. All test plan checkboxes are `[x]`
 
-If both conditions are met, say so clearly. If either condition fails, list what's still outstanding and do NOT merge.
+Do **not** merge automatically. Ask the user: "All comments are resolved and the test plan is complete. Would you like me to merge this PR?" — include the PR link. Then **wait for their response**. Do not exit the command, end the loop, or treat the PR as complete until the user replies. Only merge if they give an explicit and unconditional "yes". If their reply contains conditions (e.g. "yes, but fix this first"), address those first without merging. If they decline or don't answer, do not merge — state that the PR is merge-ready but awaiting their approval.
+
+If either condition fails, list what's still outstanding and explain what's blocking merge-readiness.
