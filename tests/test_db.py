@@ -105,6 +105,22 @@ class TestMeetingCrud:
         assert mid is not None
         assert repo.get_meeting_id_by_job("nonexistent") is None
 
+    def test_quality_flags_round_trip(self, repo, sample_sidecar):
+        flags = [
+            {"type": "low_confidence", "timestamp": "02:30", "description": "Low confidence segment"},
+            {"type": "overlap", "timestamp": "05:00", "description": "Overlapping speech"},
+        ]
+        sidecar = sample_sidecar()
+        sidecar["metadata"]["quality_flags"] = flags
+        repo.save_meeting(sidecar, "md")
+
+        result = repo.get_meeting_by_filename("test-meeting.wav")
+        meta = result["metadata"]
+        assert "quality_flags" in meta
+        assert len(meta["quality_flags"]) == 2
+        assert meta["quality_flags"][0]["type"] == "low_confidence"
+        assert meta["quality_flags"][1]["description"] == "Overlapping speech"
+
 
 class TestSpeakerNames:
     def test_save_and_get(self, repo, sample_sidecar):
