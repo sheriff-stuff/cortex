@@ -21,6 +21,7 @@ export function useCodeMirror({ initialDoc, readOnly = false, onChange }: UseCod
   const onChangeRef = useRef(onChange);
   onChangeRef.current = onChange;
 
+  // Create the editor once (or when readOnly changes)
   useEffect(() => {
     if (!containerRef.current) return;
 
@@ -52,7 +53,20 @@ export function useCodeMirror({ initialDoc, readOnly = false, onChange }: UseCod
       view.destroy();
       viewRef.current = null;
     };
-  }, [initialDoc, readOnly]);
+  }, [readOnly]); // eslint-disable-line react-hooks/exhaustive-deps -- initialDoc handled by separate effect
+
+  // Update document content without rebuilding the editor
+  useEffect(() => {
+    const view = viewRef.current;
+    if (!view) return;
+
+    const currentDoc = view.state.doc.toString();
+    if (currentDoc !== initialDoc) {
+      view.dispatch({
+        changes: { from: 0, to: currentDoc.length, insert: initialDoc },
+      });
+    }
+  }, [initialDoc]);
 
   return containerRef;
 }
