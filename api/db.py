@@ -65,6 +65,7 @@ meetings_table = Table(
     Column("overview", Text, nullable=True),
     Column("keywords", Text, nullable=True),  # JSON string
     Column("created_at", String(30), nullable=False),
+    Column("updated_at", String(30), nullable=False),
 )
 
 meeting_items_table = Table(
@@ -224,6 +225,7 @@ class MeetingRepository:
                     overview=sidecar.get("overview", ""),
                     keywords=json.dumps(sidecar.get("keywords", []), ensure_ascii=False),
                     created_at=now,
+                    updated_at=now,
                 )
             )
             meeting_id = result.inserted_primary_key[0]
@@ -463,6 +465,7 @@ class MeetingRepository:
                     question_count=summary.get("question_count", 0),
                     overview=sidecar.get("overview", ""),
                     keywords=json.dumps(sidecar.get("keywords", []), ensure_ascii=False),
+                    updated_at=_now_iso(),
                 )
             )
             # Replace meeting items
