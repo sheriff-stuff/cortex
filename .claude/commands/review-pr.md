@@ -48,11 +48,11 @@ After completing a review pass, automatically re-check for new or unresolved com
 
 ### On each cycle:
 
-1. **Check for unresolved comments**: Use `gh` to fetch all review comments and top-level PR comments. A comment is "unresolved" if it has no reply from you (the bot) yet, or if a reviewer has replied *after* your last reply on that thread.
+1. **Check for unresolved comments**: Use `gh` to fetch all review comments and top-level PR comments **only for the same PRs you reviewed in the initial pass** — do not rediscover or add additional PRs in later cycles. A comment is "unresolved" if it has no reply from you yet, or if a reviewer has replied *after* your last reply on that thread. To identify your own replies, check if the comment body starts with the required prefix (`🤖 *beep boop`).
 
 2. **If no unresolved comments remain**: The review is complete. Output the final summary (what was fixed, what was spun off, what was pushed back on) and stop.
 
-3. **If there ARE unresolved comments** (or this is the end of the first pass):
+3. **If there ARE unresolved comments**:
    - Push any pending changes first.
    - Display the cycle count and sleeping indicator, then wait 2 minutes:
 
@@ -73,12 +73,13 @@ After completing a review pass, automatically re-check for new or unresolved com
     ╭──────────────────────────╮
     │  (o_o) !                 │
     │  Claude is awake!        │
-    │  Checking for new        │
+    │  Checking for new         │
     │  comments...             │
+    │                          │
     ╰──────────────────────────╯
 ```
 
-   - Then go back to the top of this command ("Before starting") and run the full review process again.
+   - Then re-run the review process (from "For each comment") for the same set of PRs.
 
 4. **After 5 cycles**: Stop regardless and give the final summary. If there are still unresolved comments, list them and let me know.
 
