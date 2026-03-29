@@ -2,22 +2,10 @@ import { useState, useRef, useCallback, useEffect } from 'react';
 import type { TemplateSummary } from '@/types';
 import { cn } from '@/lib/utils';
 import { api } from '@/api';
+import { ACCEPTED_EXTENSIONS, formatFileSize, isValidFile } from '@/utils';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { X, Upload } from 'lucide-react';
-
-const ACCEPTED = ['.mp3', '.wav', '.m4a', '.aac', '.mp4', '.mkv', '.avi', '.mov'];
-
-function formatSize(bytes: number): string {
-  if (bytes < 1024) return `${bytes} B`;
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-}
-
-function isValidFile(file: File): boolean {
-  const ext = '.' + file.name.split('.').pop()?.toLowerCase();
-  return ACCEPTED.includes(ext);
-}
 
 interface Props {
   onUpload: (file: File, templateId?: number) => void;
@@ -43,7 +31,7 @@ export default function UploadPage({ onUpload, uploading }: Props) {
 
   const handleFile = useCallback((f: File) => {
     if (!isValidFile(f)) {
-      setError(`Unsupported format. Accepted: ${ACCEPTED.join(', ')}`);
+      setError(`Unsupported format. Accepted: ${ACCEPTED_EXTENSIONS.join(', ')}`);
       setFile(null);
       return;
     }
@@ -88,10 +76,13 @@ export default function UploadPage({ onUpload, uploading }: Props) {
           "w-full max-w-[560px] border-2 border-dashed rounded-lg p-12 text-center cursor-pointer transition-colors bg-card",
           dragOver ? "border-primary bg-primary/5" : "border-border hover:border-primary/50"
         )}
+        role="button"
+        tabIndex={0}
         onDrop={onDrop}
         onDragOver={onDragOver}
         onDragLeave={onDragLeave}
         onClick={() => inputRef.current?.click()}
+        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); inputRef.current?.click(); } }}
       >
         <Upload className="h-10 w-10 mx-auto mb-3 text-muted-foreground" />
         <p className="text-base">
@@ -101,7 +92,7 @@ export default function UploadPage({ onUpload, uploading }: Props) {
         <input
           ref={inputRef}
           type="file"
-          accept={ACCEPTED.join(',')}
+          accept={ACCEPTED_EXTENSIONS.join(',')}
           onChange={onInputChange}
           className="hidden"
         />
@@ -116,7 +107,7 @@ export default function UploadPage({ onUpload, uploading }: Props) {
       {file && (
         <div className="flex items-center gap-3 bg-card border rounded-lg px-4 py-2.5 max-w-[560px] w-full">
           <span className="font-medium truncate flex-1">{file.name}</span>
-          <span className="text-sm text-muted-foreground whitespace-nowrap">{formatSize(file.size)}</span>
+          <span className="text-sm text-muted-foreground whitespace-nowrap">{formatFileSize(file.size)}</span>
           <Button
             variant="ghost"
             size="icon-xs"

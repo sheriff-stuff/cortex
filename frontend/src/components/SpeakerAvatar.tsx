@@ -1,3 +1,5 @@
+import { cn } from '@/lib/utils';
+
 const AVATAR_COLORS = [
   'bg-blue-500',
   'bg-emerald-500',
@@ -30,7 +32,7 @@ export default function SpeakerAvatar({ name, size = 32 }: Props) {
   const colorClass = AVATAR_COLORS[hashName(name)];
   return (
     <div
-      className={`${colorClass} rounded-full flex items-center justify-center text-white font-semibold shrink-0`}
+      className={cn(colorClass, 'rounded-full flex items-center justify-center text-white font-semibold shrink-0')}
       style={{ width: size, height: size, fontSize: size * 0.375 }}
     >
       {getInitials(name)}

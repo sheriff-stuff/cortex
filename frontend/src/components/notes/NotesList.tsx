@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import type { Job, NoteSummary } from '@/types';
 import { api } from '@/api';
+import { formatMeetingDate, estimateProgress } from '@/utils';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
@@ -9,49 +10,6 @@ import { FileText, Loader2 } from 'lucide-react';
 interface Props {
   onSelect: (filename: string) => void;
   onUpload: () => void;
-}
-
-function formatMeetingDate(dateStr: string, timeStr?: string): string {
-  const formatted = new Date(dateStr + 'T00:00:00').toLocaleDateString('en-US', {
-    weekday: 'short',
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-  });
-  return timeStr ? `${formatted} at ${timeStr}` : formatted;
-}
-
-/** Map a progress string to an estimated percentage.
- *  Phase 1 (transcription) maps to 0-50%, Phase 2 (summary) maps to 50-100%.
- */
-function estimateProgress(progress: string): number {
-  const lower = progress.toLowerCase();
-  // Phase 1: Transcription (0-50%)
-  if (lower.includes('validat')) return 3;
-  if (lower.includes('reading file')) return 5;
-  if (lower.includes('extracting audio') || lower.includes('preparing audio')) return 8;
-  if (lower.includes('loading whisper')) return 12;
-  if (lower.includes('voice activity')) return 16;
-  if (lower.includes('transcribing')) return 25;
-  if (lower.includes('aligning')) return 35;
-  if (lower.includes('identifying speaker') || lower.includes('diariz')) return 42;
-  if (lower.includes('quality')) return 47;
-  if (lower.includes('saving transcript')) return 50;
-  // Phase 2: Summary (50-100%)
-  if (lower.includes('checking ollama')) return 52;
-  if (lower.includes('llm extraction')) {
-    const match = progress.match(/chunk (\d+)\/(\d+)/);
-    if (match) {
-      const [, current, total] = match;
-      return 55 + Math.round((parseInt(current) / parseInt(total)) * 35);
-    }
-    return 60;
-  }
-  if (lower.includes('ollama not available') || lower.includes('summary skipped')) return 100;
-  if (lower.includes('generating')) return 92;
-  if (lower.includes('saving')) return 96;
-  if (lower.includes('complete')) return 100;
-  return 5;
 }
 
 export default function NotesList({ onSelect, onUpload }: Props) {
@@ -91,7 +49,7 @@ export default function NotesList({ onSelect, onUpload }: Props) {
           }
         }
       } catch {
-        // ignore polling errors
+        // Polling errors are transient — swallow to avoid flickering UI
       }
     };
 
@@ -150,7 +108,10 @@ export default function NotesList({ onSelect, onUpload }: Props) {
             <Card
               key={n.filename}
               className="cursor-pointer transition-all hover:ring-2 hover:ring-primary/30 hover:shadow-md"
+              role="button"
+              tabIndex={0}
               onClick={() => onSelect(n.filename)}
+              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onSelect(n.filename); } }}
             >
               <CardContent>
                 <div className="flex justify-between items-baseline gap-3">

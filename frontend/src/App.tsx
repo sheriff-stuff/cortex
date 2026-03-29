@@ -4,10 +4,10 @@ import { api } from '@/api';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import Layout from '@/components/Layout';
-import NotesList from '@/components/NotesList';
-import UploadPage from '@/components/UploadPage';
-import NotesView from '@/components/NotesView';
-import TemplatesList from '@/components/TemplatesList';
+import NotesList from '@/components/notes/NotesList';
+import UploadPage from '@/components/upload/UploadPage';
+import NotesView from '@/components/notes/NotesView';
+import TemplatesList from '@/components/templates/TemplatesList';
 
 /** Parse current URL path into page + optional note filename. */
 function parseLocation(): { page: 'notes' | 'templates'; filename?: string } {
@@ -51,6 +51,7 @@ export default function App() {
           setNotes(n);
           setState('viewing');
         } catch {
+          // Note not found at URL — fall back to home
           setState('home');
         }
       }
