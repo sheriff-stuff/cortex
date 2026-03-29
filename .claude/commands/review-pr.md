@@ -30,4 +30,52 @@ This makes it clear the response was AI-generated, not from the repo owner.
 
 Push the changes (if any). Then leave a single top-level comment on the PR summarizing what was done — list which comments were addressed with fixes, which were split into separate PRs (with links), and which were pushed back on, with brief reasoning. This gives the reviewer a quick overview without needing to re-read every thread.
 
-Finally, give me a summary of what you fixed, what you spun off into separate PRs, and what you pushed back on.
+Do NOT give me a summary yet — proceed to the polling loop below.
+
+## Polling loop
+
+After completing a review pass, automatically re-check for new or unresolved comments. This loop runs up to **5 cycles** total (including the initial pass).
+
+### On each cycle:
+
+1. **Check for unresolved comments**: Use `gh` to fetch all review comments and top-level PR comments. A comment is "unresolved" if it has no reply from you (the bot) yet, or if a reviewer has replied *after* your last reply on that thread.
+
+2. **If no unresolved comments remain**: The review is complete. Output the final summary (what was fixed, what was spun off, what was pushed back on) and stop.
+
+3. **If there ARE unresolved comments** (or this is the end of the first pass):
+   - Push any pending changes first.
+   - Display the cycle count and sleeping indicator, then wait 2 minutes:
+
+```
+    ╭──────────────────────────╮
+    │  (-_-) zzZ               │
+    │  Claude is sleeping...   │
+    │  Next review check in    │
+    │  2 minutes               │
+    │  [Cycle 1/5]             │
+    ╰──────────────────────────╯
+```
+
+   - Run `sleep 120` to wait.
+   - After waking, output:
+
+```
+    ╭──────────────────────────╮
+    │  (o_o) !                 │
+    │  Claude is awake!        │
+    │  Checking for new        │
+    │  comments...             │
+    ╰──────────────────────────╯
+```
+
+   - Then go back to the top of this command ("Before starting") and run the full review process again.
+
+4. **After 5 cycles**: Stop regardless and give the final summary. If there are still unresolved comments, list them and let me know.
+
+### Cycle counter
+
+Track which cycle you're on (1 through 5). Display it in the sleeping indicator so I can see progress. The first full review pass counts as cycle 1.
+
+## Final summary (output only when the loop ends)
+
+Give me a summary of what you fixed, what you spun off into separate PRs, and what you pushed back on. If the loop ended because all comments were resolved, say so. If it ended because the 5-cycle cap was hit, list any remaining unresolved comments.
