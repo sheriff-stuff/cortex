@@ -105,6 +105,18 @@ class TestMeetingCrud:
         assert mid is not None
         assert repo.get_meeting_id_by_job("nonexistent") is None
 
+    def test_updated_at_set_on_insert_and_update(self, repo, sample_sidecar):
+        mid = repo.save_meeting(sample_sidecar(), "md")
+        row = repo.get_meeting_metadata_by_id(mid)
+        assert row["updated_at"] is not None
+        insert_time = row["updated_at"]
+
+        updated_sidecar = sample_sidecar(overview="Changed")
+        repo.update_meeting_extraction(mid, updated_sidecar, "# Changed")
+        row = repo.get_meeting_metadata_by_id(mid)
+        assert row["updated_at"] is not None
+        assert row["updated_at"] >= insert_time
+
 
 class TestSpeakerNames:
     def test_save_and_get(self, repo, sample_sidecar):
