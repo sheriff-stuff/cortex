@@ -17,6 +17,10 @@ A local AI meeting notes app that takes recorded meeting files and produces stru
 
 ## Requirements
 
+**For Docker (recommended):** just [Docker](https://docs.docker.com/get-docker/) with Compose v2 and a [HuggingFace](https://huggingface.co) account.
+
+**For manual install:**
+
 - Python 3.10+
 - [Node.js](https://nodejs.org/) 18+ (for the web frontend)
 - NVIDIA GPU with CUDA (recommended, CPU fallback available)

@@ -16,7 +16,7 @@ RUN pip install --no-cache-dir \
 # Copy and install project
 COPY pyproject.toml .
 COPY api/ api/
-RUN pip install --no-cache-dir -e ".[api]"
+RUN pip install --no-cache-dir -e ".[api,postgres]"
 
 # Create data directory for SQLite persistence
 RUN mkdir -p /app/data
