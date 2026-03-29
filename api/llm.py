@@ -3,7 +3,7 @@
 import json
 from typing import Callable
 
-import requests
+import httpx
 
 from api.config import Config
 from api.transcribe import Segment
@@ -14,16 +14,16 @@ _SUPPORTED_PROVIDERS = ("ollama", "openai")
 def check_ollama(config: Config) -> bool:
     """Check if Ollama is running and responsive."""
     try:
-        resp = requests.get(f"{config.ollama_url}/api/tags", timeout=5)
+        resp = httpx.get(f"{config.ollama_url}/api/tags", timeout=5)
         return resp.status_code == 200
-    except requests.ConnectionError:
+    except httpx.ConnectError:
         return False
 
 
 def check_model_available(config: Config) -> bool:
     """Check if the configured model is pulled in Ollama."""
     try:
-        resp = requests.get(f"{config.ollama_url}/api/tags", timeout=5)
+        resp = httpx.get(f"{config.ollama_url}/api/tags", timeout=5)
         if resp.status_code != 200:
             return False
         models = resp.json().get("models", [])
@@ -32,13 +32,13 @@ def check_model_available(config: Config) -> bool:
             m.get("name", "").startswith(model_name)
             for m in models
         )
-    except (requests.ConnectionError, json.JSONDecodeError):
+    except (httpx.ConnectError, json.JSONDecodeError):
         return False
 
 
 def query_ollama(prompt: str, config: Config) -> str:
     """Send a prompt to Ollama and return the response text."""
-    resp = requests.post(
+    resp = httpx.post(
         f"{config.ollama_url}/api/generate",
         json={
             "model": config.llm_model,
@@ -69,14 +69,14 @@ def _openai_headers(config: Config) -> dict:
 def check_openai(config: Config) -> bool:
     """Check if an OpenAI-compatible API is reachable."""
     try:
-        resp = requests.get(
+        resp = httpx.get(
             f"{config.llm_base_url}/models",
             headers=_openai_headers(config),
             timeout=10,
         )
         # 200 = OK, 404/405 = endpoint not implemented but server is up
         return resp.status_code in (200, 404, 405)
-    except requests.RequestException:
+    except httpx.RequestError:
         return False
 
 
@@ -87,7 +87,7 @@ def check_openai_model_available(config: Config) -> bool:
     is treated as "assume available".
     """
     try:
-        resp = requests.get(
+        resp = httpx.get(
             f"{config.llm_base_url}/models",
             headers=_openai_headers(config),
             timeout=10,
@@ -98,13 +98,13 @@ def check_openai_model_available(config: Config) -> bool:
             return False
         models = resp.json().get("data", [])
         return any(m.get("id") == config.llm_model for m in models)
-    except (requests.RequestException, json.JSONDecodeError):
+    except (httpx.RequestError, json.JSONDecodeError):
         return False
 
 
 def query_openai(prompt: str, config: Config) -> str:
     """Send a prompt to an OpenAI-compatible chat completions endpoint."""
-    resp = requests.post(
+    resp = httpx.post(
         f"{config.llm_base_url}/chat/completions",
         headers=_openai_headers(config),
         json={

@@ -11,7 +11,7 @@ dependencies = [
     "click>=8.1",
     "rich>=13.0",
     "pyyaml>=6.0",
-    "requests>=2.31",
+    "httpx>=0.25",
     "pydub>=0.25",
     "imageio-ffmpeg>=0.4",
     "whisperx>=3.1",
@@ -32,7 +32,6 @@ postgres = [
 test = [
     "pytest>=7.4",
     "pytest-asyncio>=0.23",
-    "httpx>=0.25",
 ]
 
 [project.scripts]
