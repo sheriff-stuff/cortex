@@ -6,7 +6,7 @@ services:
       args:
         TORCH_INDEX_URL: https://download.pytorch.org/whl/cpu
     ports:
-      - "9000:9000"
+      - "${BACKEND_PORT:-9000}:9000"
     volumes:
       - hf-cache:/root/.cache/huggingface
       - db-data:/app/data
@@ -30,7 +30,7 @@ services:
     image: ollama/ollama:latest
     profiles: ["ollama"]
     ports:
-      - "11434:11434"
+      - "${OLLAMA_PORT:-11434}:11434"
     volumes:
       - ollama-data:/root/.ollama
     restart: unless-stopped
