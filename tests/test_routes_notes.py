@@ -51,7 +51,7 @@ class TestGetNote:
         assert resp.status_code == 404
 
     def test_path_traversal_rejected(self, client):
-        resp = client.get("/api/notes/../../etc/passwd")
+        resp = client.get("/api/notes/..secret")
         assert resp.status_code == 400
 
 

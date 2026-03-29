@@ -2,7 +2,6 @@
 
 import pytest
 
-sqlalchemy = pytest.importorskip("sqlalchemy")
 fastapi = pytest.importorskip("fastapi")
 
 from api.jobs import Job, JobStatus

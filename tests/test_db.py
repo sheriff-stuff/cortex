@@ -4,8 +4,6 @@ import pytest
 
 pytest.importorskip("sqlalchemy")
 
-from api.transcribe import Segment
-
 
 class TestJobCrud:
     def test_create_and_get_job(self, repo):
