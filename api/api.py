@@ -399,13 +399,10 @@ def create_app(config: Config | None = None) -> FastAPI:
                 detail="Ollama is not available. Please ensure it is running.",
             )
 
-        loop = asyncio.get_event_loop()
         try:
-            result = await loop.run_in_executor(
-                None,
-                lambda: extract_from_transcript(
-                    EXAMPLE_SEGMENTS, config, prompt_text=prompt_text,
-                ),
+            result = await asyncio.to_thread(
+                extract_from_transcript,
+                EXAMPLE_SEGMENTS, config, prompt_text=prompt_text,
             )
         except Exception as exc:
             raise HTTPException(

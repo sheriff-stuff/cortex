@@ -283,3 +283,9 @@ async def process_job(
         job.error = str(e)
         job.push_event(f"Failed: {e}")
         repo.update_job(job.id, status="failed", error=str(e))
+    finally:
+        # Clean up the uploaded temp file
+        try:
+            file_path.unlink(missing_ok=True)
+        except OSError:
+            pass
