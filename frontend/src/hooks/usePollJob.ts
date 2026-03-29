@@ -1,52 +1,69 @@
 import { useEffect, useRef, useCallback } from 'react';
 import type { Job } from '@/types';
-import { api } from '@/api';
 
 interface UsePollJobOptions {
-  /** Called on each poll with the latest job state. */
+  /** Called on each progress event with the latest job state. */
   onProgress?: (job: Job) => void;
   /** Called once when the job reaches 'completed'. */
   onComplete?: (job: Job) => void;
   /** Called once when the job reaches 'failed'. */
   onFailed?: (job: Job) => void;
-  /** Polling interval in ms. Default: 2000. */
-  interval?: number;
 }
 
 /**
- * Returns a `startPolling(jobId)` function that polls a job until it
- * completes or fails, then stops automatically. Cleans up on unmount.
+ * Returns a `startPolling(jobId)` function that opens an SSE connection
+ * to the job events endpoint and fires callbacks on progress/completion.
+ * Cleans up on unmount.
  */
 export function usePollJob(options: UsePollJobOptions = {}) {
-  const { onProgress, onComplete, onFailed, interval = 2000 } = options;
-  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const { onProgress, onComplete, onFailed } = options;
+  const esRef = useRef<EventSource | null>(null);
 
   const stopPolling = useCallback(() => {
-    if (timerRef.current) {
-      clearInterval(timerRef.current);
-      timerRef.current = null;
+    if (esRef.current) {
+      esRef.current.close();
+      esRef.current = null;
     }
   }, []);
 
   const startPolling = useCallback(
     (jobId: string) => {
       stopPolling();
-      timerRef.current = setInterval(async () => {
-        try {
-          const job = await api.getJob(jobId);
-          onProgress?.(job);
+      const es = new EventSource(`/jobs/${jobId}/events`);
+      esRef.current = es;
 
-          if (job.status === 'completed' || job.status === 'failed') {
-            stopPolling();
-            if (job.status === 'completed') onComplete?.(job);
-            else onFailed?.(job);
-          }
-        } catch {
-          // Keep polling on transient errors
-        }
-      }, interval);
+      es.addEventListener('status', (e: MessageEvent) => {
+        const colonIdx = e.data.indexOf(': ');
+        const status = (colonIdx >= 0 ? e.data.slice(0, colonIdx) : e.data) as Job['status'];
+        const progress = colonIdx >= 0 ? e.data.slice(colonIdx + 2) : '';
+        onProgress?.({ job_id: jobId, status, progress, source_filename: '' });
+      });
+
+      es.addEventListener('progress', (e: MessageEvent) => {
+        onProgress?.({ job_id: jobId, status: 'processing', progress: e.data, source_filename: '' });
+      });
+
+      es.addEventListener('done', (e: MessageEvent) => {
+        const status = e.data as Job['status'];
+        const job: Job = { job_id: jobId, status, progress: 'Complete', source_filename: '' };
+        if (status === 'completed') onComplete?.(job);
+        else onFailed?.(job);
+        stopPolling();
+      });
+
+      es.onerror = () => {
+        // Connection lost — notify caller so UI can recover/retry
+        const job: Job = {
+          job_id: jobId,
+          status: 'failed',
+          progress: 'Connection error',
+          source_filename: '',
+        };
+        onFailed?.(job);
+        stopPolling();
+      };
     },
-    [stopPolling, onProgress, onComplete, onFailed, interval],
+    [stopPolling, onProgress, onComplete, onFailed],
   );
 
   // Clean up on unmount

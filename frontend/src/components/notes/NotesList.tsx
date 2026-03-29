@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import type { Job, NoteSummary } from '@/types';
 import { api } from '@/api';
 import { formatMeetingDate, estimateProgress } from '@/utils';
@@ -16,51 +16,88 @@ export default function NotesList({ onSelect, onUpload }: Props) {
   const [notes, setNotes] = useState<NoteSummary[]>([]);
   const [activeJobs, setActiveJobs] = useState<Job[]>([]);
   const [loading, setLoading] = useState(true);
-  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const eventSourcesRef = useRef<Map<string, EventSource>>(new Map());
+  const discoveryRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  // Fetch notes and active jobs on mount
+  const cleanupJob = useCallback((jobId: string) => {
+    const es = eventSourcesRef.current.get(jobId);
+    if (es) {
+      es.close();
+      eventSourcesRef.current.delete(jobId);
+    }
+    setActiveJobs(prev => prev.filter(j => j.job_id !== jobId));
+  }, []);
+
+  const connectJobSSE = useCallback((jobId: string) => {
+    if (eventSourcesRef.current.has(jobId)) return;
+
+    const es = new EventSource(`/jobs/${jobId}/events`);
+    eventSourcesRef.current.set(jobId, es);
+
+    es.addEventListener('progress', (e: MessageEvent) => {
+      setActiveJobs(prev => prev.map(j =>
+        j.job_id === jobId ? { ...j, progress: e.data } : j
+      ));
+    });
+
+    es.addEventListener('done', async () => {
+      cleanupJob(jobId);
+      try {
+        const notesList = await api.listNotes();
+        setNotes(notesList);
+      } catch {
+        // Refresh failed — will pick up on next mount
+      }
+    });
+
+    es.onerror = () => {
+      cleanupJob(jobId);
+    };
+  }, [cleanupJob]);
+
+  // Fetch notes and active jobs on mount, open SSE for each active job
   useEffect(() => {
     Promise.all([api.listNotes(), api.listJobs()])
       .then(([notesList, jobsList]) => {
         setNotes(notesList);
         setActiveJobs(jobsList);
+        jobsList.forEach(j => connectJobSSE(j.job_id));
         setLoading(false);
       })
       .catch(() => setLoading(false));
-  }, []);
 
-  // Poll for active jobs
+    return () => {
+      eventSourcesRef.current.forEach(es => es.close());
+      eventSourcesRef.current.clear();
+    };
+  }, [connectJobSSE]);
+
+  // Slow poll to discover new jobs (e.g. started from another tab)
   useEffect(() => {
-    if (activeJobs.length === 0 && !loading) return;
-
-    const poll = async () => {
+    discoveryRef.current = setInterval(async () => {
       try {
         const jobs = await api.listJobs();
-        setActiveJobs(jobs);
-        // Refresh notes list when a job completes (jobs disappear from active list)
-        if (jobs.length < activeJobs.length) {
-          const notesList = await api.listNotes();
-          setNotes(notesList);
-        }
-        if (jobs.length === 0) {
-          if (pollRef.current) {
-            clearInterval(pollRef.current);
-            pollRef.current = null;
+        for (const job of jobs) {
+          if (!eventSourcesRef.current.has(job.job_id)) {
+            setActiveJobs(prev => {
+              if (prev.some(j => j.job_id === job.job_id)) return prev;
+              return [...prev, job];
+            });
+            connectJobSSE(job.job_id);
           }
         }
       } catch {
-        // Polling errors are transient — swallow to avoid flickering UI
+        // Discovery poll failed — ignore transient errors
       }
-    };
+    }, 10000);
 
-    pollRef.current = setInterval(poll, 2000);
     return () => {
-      if (pollRef.current) {
-        clearInterval(pollRef.current);
-        pollRef.current = null;
+      if (discoveryRef.current) {
+        clearInterval(discoveryRef.current);
+        discoveryRef.current = null;
       }
     };
-  }, [activeJobs.length, loading]);
+  }, [connectJobSSE]);
 
   return (
     <div>
