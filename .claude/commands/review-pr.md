@@ -11,7 +11,7 @@ Check if the PR branch has merge conflicts with the base branch. If there are co
 2. **If worth fixing (in scope)**: Make the code change on the current branch, then reply to the comment on GitHub tagging the reviewer (e.g. "@reviewer Fixed — removed the unused parameter, good catch.").
 
 3. **If valid but out of scope**: The feedback is correct, but fixing it here would go beyond the purpose of this PR (e.g. a pre-existing issue, a separate concern, or a feature request). In this case:
-   - Create a new branch off the PR branch (or master if more appropriate) and make the fix there.
+   - Create a new branch for the fix. Prefer branching from the base branch (e.g. `master` or `main`). Only branch from the current PR branch if the fix depends on the changes in this PR.
    - Open a separate PR for it.
    - Reply to the comment on GitHub tagging the reviewer, explaining that it's out of scope for this PR but has been addressed separately, and link to the new PR (e.g. "@reviewer Good catch — this is a pre-existing issue outside the scope of this PR. Opened #42 to address it.").
 
