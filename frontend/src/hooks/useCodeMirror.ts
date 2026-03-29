@@ -18,8 +18,8 @@ interface UseCodeMirrorOptions {
 export function useCodeMirror({ initialDoc, readOnly = false, onChange }: UseCodeMirrorOptions) {
   const containerRef = useRef<HTMLDivElement>(null);
   const viewRef = useRef<EditorView | null>(null);
-  const docRef = useRef(initialDoc);
-  docRef.current = initialDoc;
+  const onChangeRef = useRef(onChange);
+  onChangeRef.current = onChange;
 
   useEffect(() => {
     if (!containerRef.current) return;
@@ -32,7 +32,7 @@ export function useCodeMirror({ initialDoc, readOnly = false, onChange }: UseCod
       EditorView.lineWrapping,
       EditorView.updateListener.of((update) => {
         if (update.docChanged) {
-          onChange?.(update.state.doc.toString());
+          onChangeRef.current?.(update.state.doc.toString());
         }
       }),
     ];
@@ -43,7 +43,7 @@ export function useCodeMirror({ initialDoc, readOnly = false, onChange }: UseCod
     }
 
     const view = new EditorView({
-      state: EditorState.create({ doc: docRef.current, extensions }),
+      state: EditorState.create({ doc: initialDoc, extensions }),
       parent: containerRef.current,
     });
     viewRef.current = view;
@@ -52,7 +52,7 @@ export function useCodeMirror({ initialDoc, readOnly = false, onChange }: UseCod
       view.destroy();
       viewRef.current = null;
     };
-  }, [readOnly, onChange]);
+  }, [initialDoc, readOnly]);
 
   return containerRef;
 }
