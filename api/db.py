@@ -390,6 +390,40 @@ class MeetingRepository:
                         )
                     )
 
+    # --- Title ---
+
+    def update_title(self, meeting_id: int, title: str) -> None:
+        """Update the title for a meeting."""
+        with self._engine.begin() as conn:
+            conn.execute(
+                update(meetings_table)
+                .where(meetings_table.c.id == meeting_id)
+                .values(title=title)
+            )
+
+    def get_meetings_without_title(self) -> list[dict]:
+        """Return meetings that have an overview but no title (for backfill)."""
+        with self._engine.connect() as conn:
+            rows = conn.execute(
+                select(
+                    meetings_table.c.id,
+                    meetings_table.c.overview,
+                )
+                .where(
+                    (meetings_table.c.title.is_(None) | (meetings_table.c.title == ""))
+                    & (meetings_table.c.overview.isnot(None))
+                    & (meetings_table.c.overview != "")
+                )
+            ).mappings().all()
+
+            results = []
+            for row in rows:
+                d = dict(row)
+                items = self._load_meeting_items(conn, d["id"])
+                d["topics"] = items.get("topics", [])
+                results.append(d)
+            return results
+
     # --- Transcript Segments ---
 
     def save_transcript_segments(self, meeting_id: int, segments: list) -> None:
