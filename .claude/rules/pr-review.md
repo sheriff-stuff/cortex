@@ -1,0 +1,1 @@
+When reviewing PR comments, if valid feedback is out of scope for the current PR (e.g. pre-existing issues just moved during a refactor), create a follow-up PR with the fix on a separate branch instead of pushing back. Link the follow-up PR in a reply on the original review comment.
