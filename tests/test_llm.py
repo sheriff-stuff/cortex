@@ -37,7 +37,7 @@ class TestOpenAIHeaders:
 
 
 class TestCheckOpenAI:
-    @patch("api.llm.requests.get")
+    @patch("api.llm._client.get")
     def test_reachable(self, mock_get):
         mock_get.return_value = MagicMock(status_code=200)
         config = Config(llm_provider="openai", llm_base_url="http://test/v1")
@@ -45,28 +45,28 @@ class TestCheckOpenAI:
         mock_get.assert_called_once()
         assert "http://test/v1/models" in mock_get.call_args[0]
 
-    @patch("api.llm.requests.get")
+    @patch("api.llm._client.get")
     def test_404_treated_as_reachable(self, mock_get):
         mock_get.return_value = MagicMock(status_code=404)
         config = Config(llm_provider="openai")
         assert check_openai(config) is True
 
-    @patch("api.llm.requests.get")
+    @patch("api.llm._client.get")
     def test_405_treated_as_reachable(self, mock_get):
         mock_get.return_value = MagicMock(status_code=405)
         config = Config(llm_provider="openai")
         assert check_openai(config) is True
 
-    @patch("api.llm.requests.get")
+    @patch("api.llm._client.get")
     def test_unreachable(self, mock_get):
-        from requests import ConnectionError
-        mock_get.side_effect = ConnectionError("refused")
+        from httpx import ConnectError
+        mock_get.side_effect = ConnectError("refused", request=None)
         config = Config(llm_provider="openai")
         assert check_openai(config) is False
 
 
 class TestCheckOpenAIModelAvailable:
-    @patch("api.llm.requests.get")
+    @patch("api.llm._client.get")
     def test_model_found(self, mock_get):
         resp = MagicMock(status_code=200)
         resp.json.return_value = {"data": [{"id": "gpt-4o"}, {"id": "gpt-3.5-turbo"}]}
@@ -74,7 +74,7 @@ class TestCheckOpenAIModelAvailable:
         config = Config(llm_provider="openai", llm_model="gpt-4o")
         assert check_openai_model_available(config) is True
 
-    @patch("api.llm.requests.get")
+    @patch("api.llm._client.get")
     def test_model_not_found(self, mock_get):
         resp = MagicMock(status_code=200)
         resp.json.return_value = {"data": [{"id": "gpt-3.5-turbo"}]}
@@ -82,7 +82,7 @@ class TestCheckOpenAIModelAvailable:
         config = Config(llm_provider="openai", llm_model="gpt-4o")
         assert check_openai_model_available(config) is False
 
-    @patch("api.llm.requests.get")
+    @patch("api.llm._client.get")
     def test_404_assumes_available(self, mock_get):
         mock_get.return_value = MagicMock(status_code=404)
         config = Config(llm_provider="openai", llm_model="gpt-4o")
@@ -93,7 +93,7 @@ class TestCheckOpenAIModelAvailable:
 
 
 class TestQueryOpenAI:
-    @patch("api.llm.requests.post")
+    @patch("api.llm._client.post")
     def test_successful_query(self, mock_post):
         resp = MagicMock(status_code=200)
         resp.json.return_value = {
@@ -119,7 +119,7 @@ class TestQueryOpenAI:
         assert body["messages"] == [{"role": "user", "content": "test prompt"}]
         assert body["temperature"] == 0.1
 
-    @patch("api.llm.requests.post")
+    @patch("api.llm._client.post")
     def test_unexpected_response_format(self, mock_post):
         resp = MagicMock(status_code=200)
         resp.json.return_value = {"unexpected": "format"}
