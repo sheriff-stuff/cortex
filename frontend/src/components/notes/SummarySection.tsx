@@ -9,12 +9,12 @@ interface Props {
 
 export default function SummarySection({ title, children, showSeparator = true }: Props) {
   return (
-    <>
+    <div>
       {showSeparator && <Separator />}
       <section>
         <h2 className="text-lg font-semibold mb-3">{title}</h2>
         {children}
       </section>
-    </>
+    </div>
   );
 }

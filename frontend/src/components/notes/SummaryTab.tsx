@@ -33,10 +33,17 @@ export default function SummaryTab({ overview, keywords, topics, decisions, acti
       ? topics.slice(0, 3).map((t) => apply(t.description)).join(' ')
       : null;
 
+  // Track which sections are present so separators only appear between sections
+  const hasOverview = !!overviewText;
+  const hasTopics = topics.length > 0;
+  const hasActions = actionItems.length > 0;
+  const hasDecisions = decisions.length > 0;
+  const hasQuestions = questions.length > 0;
+
   return (
     <div className="space-y-6 pt-4">
       {/* Overview */}
-      {overviewText && (
+      {hasOverview && (
         <section>
           <h2 className="text-lg font-semibold mb-2">Overview</h2>
           <p className="text-sm text-muted-foreground leading-relaxed">{overviewText}</p>
@@ -44,8 +51,8 @@ export default function SummaryTab({ overview, keywords, topics, decisions, acti
       )}
 
       {/* Outline */}
-      {topics.length > 0 && (
-        <SummarySection title="Outline" showSeparator={!!overviewText}>
+      {hasTopics && (
+        <SummarySection title="Outline" showSeparator={hasOverview}>
           <div>
             {topics.map((topic, i) => {
               const points = topic.key_points && topic.key_points.length > 0
@@ -74,8 +81,8 @@ export default function SummaryTab({ overview, keywords, topics, decisions, acti
       )}
 
       {/* Action Items */}
-      {actionItems.length > 0 && (
-        <SummarySection title="Action Items">
+      {hasActions && (
+        <SummarySection title="Action Items" showSeparator={hasOverview || hasTopics}>
           <ul className="space-y-2">
             {actionItems.map((a, i) => (
               <li key={i} className="flex items-start gap-2.5">
@@ -93,8 +100,8 @@ export default function SummaryTab({ overview, keywords, topics, decisions, acti
       )}
 
       {/* Decisions */}
-      {decisions.length > 0 && (
-        <SummarySection title="Decisions">
+      {hasDecisions && (
+        <SummarySection title="Decisions" showSeparator={hasOverview || hasTopics || hasActions}>
           <ul className="space-y-2">
             {decisions.map((d, i) => (
               <li key={i} className="flex items-start gap-2.5">
@@ -112,8 +119,8 @@ export default function SummaryTab({ overview, keywords, topics, decisions, acti
       )}
 
       {/* Questions & Answers */}
-      {questions.length > 0 && (
-        <SummarySection title="Questions & Answers">
+      {hasQuestions && (
+        <SummarySection title="Questions & Answers" showSeparator={hasOverview || hasTopics || hasActions || hasDecisions}>
           <div className="space-y-4">
             {questions.map((q, i) => (
               <Fragment key={i}>
@@ -153,7 +160,7 @@ export default function SummaryTab({ overview, keywords, topics, decisions, acti
 
       {/* Keywords */}
       {keywords && keywords.length > 0 && (
-        <SummarySection title="Keywords">
+        <SummarySection title="Keywords" showSeparator={hasOverview || hasTopics || hasActions || hasDecisions || hasQuestions}>
           <div className="flex flex-wrap gap-1.5">
             {keywords.map((kw, i) => (
               <span
