@@ -22,6 +22,7 @@ Local AI meeting notes app with React frontend and FastAPI backend. Transcribes 
 - Ollama model default is `qwen2.5-coder:32b` (not `qwen2.5:32b` which isn't pulled locally)
 - In-memory SQLite (`sqlite:///:memory:`) requires `StaticPool` — already configured in `create_db_engine()`.
 - No inline migration code in `db.py`: when schema changes are made, update `migration/SCHEMA.md` to match and run `python migration/migrate.py` to bring the live DB up to date. Never delete user data.
+- The `🤖 *beep boop — this is Claude, not a human*` prefix on GitHub comments is load-bearing — the `/review-pr` polling loop uses it to identify bot replies and determine which threads are unresolved. Don't change or remove this prefix without updating the detection logic in `review-pr.md`.
 
 ## Architecture
 
