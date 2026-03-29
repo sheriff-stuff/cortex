@@ -121,6 +121,6 @@ When the following conditions are met:
 1. All reviewer comments are resolved (replied to, with fixes pushed)
 2. All test plan checkboxes are `[x]`
 
-Ask the user: "All comments are resolved and the test plan is complete. Would you like me to merge this PR?" — include the PR link. Only merge if they explicitly say yes.
+Ask the user: "All comments are resolved and the test plan is complete. Would you like me to merge this PR?" — include the PR link. Only merge if they give an explicit and unconditional "yes". If their reply contains any other requests or conditions (e.g. "yes, but fix this first"), address those first without merging.
 
 If either condition fails, list what's still outstanding and explain what's blocking merge-readiness.
