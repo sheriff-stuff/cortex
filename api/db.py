@@ -1,6 +1,5 @@
 """Database layer: schema definition and repository (SQLAlchemy Core)."""
 
-import json
 from datetime import datetime, timezone
 
 from sqlalchemy import (
@@ -8,6 +7,7 @@ from sqlalchemy import (
     Float,
     Index,
     Integer,
+    JSON,
     MetaData,
     String,
     Table,
@@ -56,14 +56,14 @@ meetings_table = Table(
     Column("processing_date", String(30)),
     Column("whisper_model", String(50)),
     Column("llm_model", String(100)),
-    Column("quality_flags", Text),  # JSON string
+    Column("quality_flags", JSON, nullable=True),
     Column("markdown_content", Text),
     Column("topic_count", Integer, default=0),
     Column("decision_count", Integer, default=0),
     Column("action_item_count", Integer, default=0),
     Column("question_count", Integer, default=0),
     Column("overview", Text, nullable=True),
-    Column("keywords", Text, nullable=True),  # JSON string
+    Column("keywords", JSON, nullable=True),
     Column("created_at", String(30), nullable=False),
 )
 
@@ -73,7 +73,7 @@ meeting_items_table = Table(
     Column("id", Integer, primary_key=True, autoincrement=True),
     Column("meeting_id", Integer, nullable=False),
     Column("item_type", String(20), nullable=False),
-    Column("data", Text, nullable=False),  # JSON string
+    Column("data", JSON, nullable=False),
     Column("sort_order", Integer, nullable=False, default=0),
     Index("ix_meeting_items_meeting_type", "meeting_id", "item_type"),
 )
@@ -136,7 +136,7 @@ class MeetingRepository:
                     insert(meeting_items_table).values(
                         meeting_id=meeting_id,
                         item_type=item_type,
-                        data=json.dumps(item, ensure_ascii=False),
+                        data=item,
                         sort_order=i,
                     )
                 )
@@ -215,14 +215,14 @@ class MeetingRepository:
                     processing_date=meta.get("processing_date", ""),
                     whisper_model=meta.get("whisper_model", ""),
                     llm_model=meta.get("llm_model", ""),
-                    quality_flags=json.dumps(quality) if quality else None,
+                    quality_flags=quality,
                     markdown_content=markdown_content,
                     topic_count=summary.get("topic_count", 0),
                     decision_count=summary.get("decision_count", 0),
                     action_item_count=summary.get("action_item_count", 0),
                     question_count=summary.get("question_count", 0),
                     overview=sidecar.get("overview", ""),
-                    keywords=json.dumps(sidecar.get("keywords", []), ensure_ascii=False),
+                    keywords=sidecar.get("keywords", []),
                     created_at=now,
                 )
             )
@@ -272,10 +272,6 @@ class MeetingRepository:
     @staticmethod
     def _build_meeting_meta(row: dict) -> dict:
         """Build metadata dict from a meeting DB row."""
-        quality_flags = None
-        if row["quality_flags"]:
-            quality_flags = json.loads(row["quality_flags"])
-
         meta = {
             "meeting_date": row["meeting_date"],
             "meeting_time": row["meeting_time"],
@@ -286,8 +282,8 @@ class MeetingRepository:
             "whisper_model": row["whisper_model"],
             "llm_model": row["llm_model"],
         }
-        if quality_flags:
-            meta["quality_flags"] = quality_flags
+        if row["quality_flags"]:
+            meta["quality_flags"] = row["quality_flags"]
         return meta
 
     @staticmethod
@@ -310,7 +306,7 @@ class MeetingRepository:
         for item_row in item_rows:
             item_type = item_row[0]
             if item_type in items_by_type:
-                items_by_type[item_type].append(json.loads(item_row[1]))
+                items_by_type[item_type].append(item_row[1])
         return items_by_type
 
     def get_meeting_by_filename(self, filename: str) -> dict | None:
@@ -325,13 +321,6 @@ class MeetingRepository:
                 return None
             row = dict(row)
 
-            keywords = []
-            if row.get("keywords"):
-                try:
-                    keywords = json.loads(row["keywords"])
-                except (json.JSONDecodeError, TypeError):
-                    pass
-
             return {
                 "filename": row["filename"],
                 "title": row.get("title") or "",
@@ -344,7 +333,7 @@ class MeetingRepository:
                     "question_count": row["question_count"],
                 },
                 "overview": row.get("overview") or "",
-                "keywords": keywords,
+                "keywords": row.get("keywords") or [],
                 "markdown_content": row["markdown_content"],
                 **self._load_meeting_items(conn, row["id"]),
             }
@@ -462,7 +451,7 @@ class MeetingRepository:
                     action_item_count=summary.get("action_item_count", 0),
                     question_count=summary.get("question_count", 0),
                     overview=sidecar.get("overview", ""),
-                    keywords=json.dumps(sidecar.get("keywords", []), ensure_ascii=False),
+                    keywords=sidecar.get("keywords", []),
                 )
             )
             # Replace meeting items

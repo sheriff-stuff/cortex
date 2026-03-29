@@ -1,7 +1,6 @@
 """Job model, in-memory store, and pipeline runner."""
 
 import asyncio
-import json
 import logging
 import re
 import tempfile
@@ -189,10 +188,9 @@ def run_summary(
     # Reconstruct quality flags from stored meeting data
     quality_flags = []
     if meeting_row and meeting_row.get("quality_flags"):
-        raw_flags = json.loads(meeting_row["quality_flags"])
         quality_flags = [
             QualityFlag(type=f["type"], timestamp=f["timestamp"], description=f["description"])
-            for f in raw_flags
+            for f in meeting_row["quality_flags"]
         ]
 
     source_file = Path(meeting_row["audio_file"]) if meeting_row else Path("unknown")
