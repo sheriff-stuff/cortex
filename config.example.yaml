@@ -16,7 +16,9 @@ llm_api_key: ""
 # Base URL for OpenAI-compatible APIs (ignored when using Ollama)
 # Examples:
 #   OpenAI:       https://api.openai.com/v1
-#   Azure OpenAI: https://YOUR-RESOURCE.openai.azure.com/openai/deployments/YOUR-DEPLOYMENT
+#   Azure OpenAI: https://YOUR-RESOURCE.openai.azure.com/openai/deployments/YOUR-DEPLOYMENT/v1
+#                 Note: Azure may require api-version query param and api-key header;
+#                 check your Azure setup for OpenAI-compatibility details.
 #   vLLM:         http://localhost:8000/v1
 #   LiteLLM:      http://localhost:4000/v1
 #   Ollama (OpenAI compat): http://localhost:11434/v1

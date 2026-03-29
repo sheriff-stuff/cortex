@@ -1,7 +1,6 @@
 """LLM HTTP client (Ollama + OpenAI-compatible) and transcript chunking logic."""
 
 import json
-import logging
 from typing import Callable
 
 import requests
@@ -9,7 +8,7 @@ import requests
 from api.config import Config
 from api.transcribe import Segment
 
-logger = logging.getLogger(__name__)
+_SUPPORTED_PROVIDERS = ("ollama", "openai")
 
 
 def check_ollama(config: Config) -> bool:
@@ -77,7 +76,7 @@ def check_openai(config: Config) -> bool:
         )
         # 200 = OK, 404/405 = endpoint not implemented but server is up
         return resp.status_code in (200, 404, 405)
-    except requests.ConnectionError:
+    except requests.RequestException:
         return False
 
 
@@ -99,7 +98,7 @@ def check_openai_model_available(config: Config) -> bool:
             return False
         models = resp.json().get("data", [])
         return any(m.get("id") == config.llm_model for m in models)
-    except (requests.ConnectionError, json.JSONDecodeError):
+    except (requests.RequestException, json.JSONDecodeError):
         return False
 
 
@@ -122,30 +121,41 @@ def query_openai(prompt: str, config: Config) -> str:
         return data["choices"][0]["message"]["content"]
     except (KeyError, IndexError, TypeError) as exc:
         raise ValueError(
-            f"Unexpected response format from {config.llm_base_url}: {data}"
+            f"Unexpected response format from {config.llm_base_url}: {str(data)[:500]}"
         ) from exc
 
 
 # --- Provider dispatchers ---
 
 
+def _validate_provider(config: Config) -> str:
+    """Validate and return the configured LLM provider."""
+    provider = config.llm_provider
+    if provider not in _SUPPORTED_PROVIDERS:
+        raise ValueError(
+            f"Unsupported llm_provider '{provider}'. "
+            f"Supported: {', '.join(_SUPPORTED_PROVIDERS)}"
+        )
+    return provider
+
+
 def check_llm(config: Config) -> bool:
     """Check if the configured LLM provider is reachable."""
-    if config.llm_provider == "openai":
+    if _validate_provider(config) == "openai":
         return check_openai(config)
     return check_ollama(config)
 
 
 def check_llm_model_available(config: Config) -> bool:
     """Check if the configured model is available on the LLM provider."""
-    if config.llm_provider == "openai":
+    if _validate_provider(config) == "openai":
         return check_openai_model_available(config)
     return check_model_available(config)
 
 
 def query_llm(prompt: str, config: Config) -> str:
     """Send a prompt to the configured LLM provider."""
-    if config.llm_provider == "openai":
+    if _validate_provider(config) == "openai":
         return query_openai(prompt, config)
     return query_ollama(prompt, config)
 

@@ -1,6 +1,5 @@
 """Tests for LLM provider dispatching and OpenAI-compatible client."""
 
-import json
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -58,7 +57,7 @@ class TestCheckOpenAI:
         config = Config(llm_provider="openai")
         assert check_openai(config) is True
 
-    @patch("api.llm.requests.get", side_effect=Exception("connection refused"))
+    @patch("api.llm.requests.get")
     def test_unreachable(self, mock_get):
         from requests import ConnectionError
         mock_get.side_effect = ConnectionError("refused")
@@ -173,3 +172,8 @@ class TestDispatchers:
         result = query_llm("prompt", config)
         assert result == "openai response"
         mock_query.assert_called_once_with("prompt", config)
+
+    def test_invalid_provider_raises(self):
+        config = Config(llm_provider="invalid")
+        with pytest.raises(ValueError, match="Unsupported llm_provider"):
+            check_llm(config)

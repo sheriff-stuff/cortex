@@ -52,8 +52,12 @@ def serve(host, port, config_path, database_url, llm_provider, llm_api_key, llm_
             os.environ["MEETING_NOTES_CONFIG"] = str(config_path)
         if database_url:
             os.environ["MEETING_NOTES_DATABASE_URL"] = database_url
+        if llm_provider:
+            os.environ["MEETING_NOTES_LLM_PROVIDER"] = llm_provider
         if llm_api_key:
             os.environ["MEETING_NOTES_LLM_API_KEY"] = llm_api_key
+        if llm_base_url:
+            os.environ["MEETING_NOTES_LLM_BASE_URL"] = llm_base_url
         uvicorn.run(
             "api.api:create_app_from_env",
             factory=True,
