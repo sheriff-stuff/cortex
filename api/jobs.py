@@ -2,6 +2,7 @@
 
 import asyncio
 import json
+import logging
 import re
 import tempfile
 from dataclasses import dataclass, field
@@ -10,6 +11,8 @@ from pathlib import Path
 
 from api.config import Config
 from api.db import MeetingRepository
+
+logger = logging.getLogger(__name__)
 
 
 class JobStatus(str, Enum):
@@ -283,3 +286,9 @@ async def process_job(
         job.error = str(e)
         job.push_event(f"Failed: {e}")
         repo.update_job(job.id, status="failed", error=str(e))
+    finally:
+        # Clean up the uploaded temp file
+        try:
+            file_path.unlink(missing_ok=True)
+        except OSError:
+            logger.warning("Failed to clean up temp file %s", file_path, exc_info=True)
