@@ -44,11 +44,14 @@ Do NOT give me a summary yet — proceed to test plan verification below.
 
 ## Test plan verification
 
-Before the PR can be merged, **every checkbox in the test plan must be ticked**. Parse the PR body for the `## Test plan` section and extract all checkboxes (`- [ ]` and `- [x]`).
+Before the PR can be merged, **every checkbox in the test plan must be ticked**. Parse the PR body for the `## Test plan` section (match the heading case-insensitively) and extract all markdown checkboxes in that section, regardless of bullet marker or checkbox casing (e.g. `- [ ]`, `* [x]`, `- [X]`).
 
 ### For each unchecked item:
 
-1. **Can you verify it yourself?** (e.g. "run tests", "verify the API response", "check the build passes") — Do it. If it passes, tick the checkbox by updating the PR body via `gh pr edit --body` with the checkbox changed from `- [ ]` to `- [x]`.
+1. **Can you verify it yourself?** (e.g. "run tests", "verify the API response", "check the build passes") — Do it. If it passes, tick the checkbox **without losing any existing content**:
+   - Use `gh pr view --json body -q '.body' > pr_body.md` to fetch the current PR body into a local file.
+   - Edit `pr_body.md` locally, changing the relevant `- [ ]` line under `## Test plan` to `- [x]` while keeping all other content unchanged.
+   - Run `gh pr edit --body-file pr_body.md` to write back the full updated PR body.
 
 2. **Can't verify / unsure?** (e.g. "test on a mobile device", "verify in staging", requires UI interaction, needs access you don't have) — Flag it to the user with a clear message:
    - What the test item is
@@ -58,11 +61,7 @@ Before the PR can be merged, **every checkbox in the test plan must be ticked**.
 ### After attempting all items:
 
 - **All boxes ticked** → proceed to the polling loop.
-- **Some remain unticked** → tell the user exactly which items need their attention. Do NOT proceed to merge. The polling loop will re-check the test plan on each cycle, so if the user ticks boxes manually between cycles, the next pass will pick that up.
-
-### Re-check on each polling cycle
-
-During the polling loop, re-parse the PR body on every cycle to check for newly ticked boxes (the user may have completed manual testing between cycles). Only consider the PR merge-ready when all boxes are `[x]`.
+- **Some remain unticked** → tell the user exactly which items need their attention. Do NOT proceed to merge. The polling loop will re-check the test plan on each cycle (the user may tick boxes manually between cycles).
 
 ## Polling loop
 
@@ -70,11 +69,11 @@ After completing a review pass, automatically re-check for new or unresolved com
 
 ### On each cycle:
 
-1. **Check for unresolved comments**: Use `gh` to fetch all review comments and top-level PR comments **only for the same PRs you reviewed in the initial pass** — do not rediscover or add additional PRs in later cycles. A comment is "unresolved" if it has no reply from you yet, or if a reviewer has replied *after* your last reply on that thread. To identify your own replies, check if the comment body starts with the required prefix (`🤖 *beep boop`).
+1. **Check for unresolved comments AND test plan status**: Use `gh` to fetch all review comments and top-level PR comments **only for the same PRs you reviewed in the initial pass** — do not rediscover or add additional PRs in later cycles. A comment is "unresolved" if it has no reply from you yet, or if a reviewer has replied *after* your last reply on that thread. To identify your own replies, check if the comment body starts with the required prefix (`🤖 *beep boop`). Also re-parse the PR body to check if any test plan checkboxes are still unchecked.
 
-2. **If no unresolved comments remain**: The review is complete. Output the final summary (what was fixed, what was spun off, what was pushed back on) and stop.
+2. **If no unresolved comments remain AND all test plan checkboxes are `[x]`**: The review is complete. Output the final summary (what was fixed, what was spun off, what was pushed back on) and stop.
 
-3. **If there ARE unresolved comments**:
+3. **If there ARE unresolved comments OR unchecked test plan items**:
    - Push any pending changes first.
    - Display the cycle count and sleeping indicator, then wait 2 minutes:
 
