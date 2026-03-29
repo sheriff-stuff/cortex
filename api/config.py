@@ -14,7 +14,10 @@ class Config:
     whisper_model: str = "large-v3"
     whisper_device: str = "cuda"
     whisper_compute_type: str = "float16"
+    llm_provider: str = "ollama"
     llm_model: str = "qwen2.5-coder:32b"
+    llm_api_key: str = ""
+    llm_base_url: str = "https://api.openai.com/v1"
     ollama_url: str = "http://localhost:11434"
     default_output_dir: str = "./meeting-notes"
     chunk_max_tokens: int = 3000

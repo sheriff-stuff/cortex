@@ -67,9 +67,13 @@ def create_app_from_env() -> FastAPI:
     config_path = os.environ.get("MEETING_NOTES_CONFIG")
     database_url = os.environ.get("MEETING_NOTES_DATABASE_URL")
 
+    llm_api_key = os.environ.get("MEETING_NOTES_LLM_API_KEY")
+
     cli_overrides = {}
     if database_url:
         cli_overrides["database_url"] = database_url
+    if llm_api_key:
+        cli_overrides["llm_api_key"] = llm_api_key
 
     config = load_config(
         config_path=Path(config_path) if config_path else None,

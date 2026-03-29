@@ -7,7 +7,7 @@ from dataclasses import dataclass, field
 from typing import Callable
 
 from api.config import Config
-from api.llm import chunk_transcript, query_ollama
+from api.llm import chunk_transcript, query_llm
 from api.prompts import build_extraction_prompt, format_transcript_for_llm
 from api.transcribe import Segment
 
@@ -160,7 +160,7 @@ def extract_from_transcript(
         # Try up to 2 times
         for attempt in range(2):
             try:
-                response = query_ollama(prompt, config)
+                response = query_llm(prompt, config)
                 parsed = parse_llm_response(response)
                 chunk_results.append(parsed)
                 break

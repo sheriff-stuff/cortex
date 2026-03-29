@@ -31,12 +31,15 @@ def main():
     help="Output directory (default: ./meeting-notes)",
 )
 @click.option("--whisper-model", default=None, help="Whisper model name (default: large-v3)")
-@click.option("--llm-model", default=None, help="Ollama model (default: qwen2.5:32b)")
+@click.option("--llm-provider", default=None, type=click.Choice(["ollama", "openai"]), help="LLM provider (default: ollama)")
+@click.option("--llm-model", default=None, help="LLM model name (default: qwen2.5-coder:32b)")
+@click.option("--llm-api-key", default=None, help="API key for external LLM provider")
+@click.option("--llm-base-url", default=None, help="Base URL for OpenAI-compatible API")
 @click.option("--ollama-url", default=None, help="Ollama API URL")
 @click.option("--config", "config_path", type=click.Path(exists=True), default=None, help="Config file path")
 @click.option("--no-llm", is_flag=True, default=False, help="Skip LLM extraction, output transcript only")
 @click.option("--hf-token", default=None, help="HuggingFace token for pyannote diarization model")
-def process(file, output_dir, whisper_model, llm_model, ollama_url, config_path, no_llm, hf_token):
+def process(file, output_dir, whisper_model, llm_provider, llm_model, llm_api_key, llm_base_url, ollama_url, config_path, no_llm, hf_token):
     """Process a meeting recording into structured notes."""
     file_path = Path(file)
 
@@ -51,7 +54,10 @@ def process(file, output_dir, whisper_model, llm_model, ollama_url, config_path,
     # Build config
     cli_overrides = {
         "whisper_model": whisper_model,
+        "llm_provider": llm_provider,
         "llm_model": llm_model,
+        "llm_api_key": llm_api_key,
+        "llm_base_url": llm_base_url,
         "ollama_url": ollama_url,
         "hf_token": hf_token,
     }

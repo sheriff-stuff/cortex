@@ -24,7 +24,7 @@ def process_meeting(file_path: Path, config: Config, no_llm: bool = False) -> Pa
     """
     from api.audio import extract_audio, get_duration, validate_input
     from api.extractor import ExtractionResult, extract_from_transcript
-    from api.llm import check_model_available, check_ollama
+    from api.llm import check_llm, check_llm_model_available
     from api.markdown import build_sidecar_dict, render, write_output
     from api.quality import analyze_quality
     from api.transcribe import transcribe
@@ -83,20 +83,32 @@ def process_meeting(file_path: Path, config: Config, no_llm: bool = False) -> Pa
             # Step 6: LLM extraction
             extraction = None
             if not no_llm:
-                progress.update(main_task, description="Checking Ollama...")
+                progress.update(main_task, description="Checking LLM...")
 
-                if not check_ollama(config):
-                    console.print(
-                        "[bold red]Error:[/] Ollama is not running. "
-                        "Start it with [cyan]ollama serve[/] or use [cyan]--no-llm[/] for transcript only."
-                    )
+                if not check_llm(config):
+                    if config.llm_provider == "ollama":
+                        console.print(
+                            "[bold red]Error:[/] Ollama is not running. "
+                            "Start it with [cyan]ollama serve[/] or use [cyan]--no-llm[/] for transcript only."
+                        )
+                    else:
+                        console.print(
+                            f"[bold red]Error:[/] LLM provider at [cyan]{config.llm_base_url}[/] is not reachable. "
+                            "Check your config or use [cyan]--no-llm[/] for transcript only."
+                        )
                     raise SystemExit(1)
 
-                if not check_model_available(config):
-                    console.print(
-                        f"[bold red]Error:[/] Model '{config.llm_model}' not found. "
-                        f"Pull it with [cyan]ollama pull {config.llm_model}[/]"
-                    )
+                if not check_llm_model_available(config):
+                    if config.llm_provider == "ollama":
+                        console.print(
+                            f"[bold red]Error:[/] Model '{config.llm_model}' not found. "
+                            f"Pull it with [cyan]ollama pull {config.llm_model}[/]"
+                        )
+                    else:
+                        console.print(
+                            f"[bold red]Error:[/] Model '{config.llm_model}' not found "
+                            f"at [cyan]{config.llm_base_url}[/]."
+                        )
                     raise SystemExit(1)
 
                 def llm_callback(current: int, total: int) -> None:
