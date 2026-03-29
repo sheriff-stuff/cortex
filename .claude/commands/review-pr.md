@@ -40,7 +40,29 @@ When you spot one of these, tell me what you'd add to `CLAUDE.md` and where (whi
 
 Push the changes (if any). Then leave a single top-level comment on the PR summarizing what was done — list which comments were addressed with fixes, which were split into separate PRs (with links), and which were pushed back on, with brief reasoning. This gives the reviewer a quick overview without needing to re-read every thread.
 
-Do NOT give me a summary yet — proceed to the polling loop below.
+Do NOT give me a summary yet — proceed to test plan verification below.
+
+## Test plan verification
+
+Before the PR can be merged, **every checkbox in the test plan must be ticked**. Parse the PR body for the `## Test plan` section (match the heading case-insensitively) and extract all markdown checkboxes in that section, regardless of bullet marker or checkbox casing (e.g. `- [ ]`, `* [x]`, `- [X]`).
+
+### For each unchecked item:
+
+1. **Can you verify it yourself?** (e.g. "run tests", "verify the API response", "check the build passes") — Do it. If it passes, tick the checkbox **without losing any existing content**:
+   - Use `gh pr view --json body -q '.body' > pr_body.md` to fetch the current PR body into a local file.
+   - Edit `pr_body.md` locally, changing the relevant `- [ ]` line under `## Test plan` to `- [x]` while keeping all other content unchanged.
+   - Run `gh pr edit --body-file pr_body.md` to write back the full updated PR body.
+
+2. **Can't verify / unsure?** (e.g. "test on a mobile device", "verify in staging", requires UI interaction, needs access you don't have) — Flag it to the user with a clear message:
+   - What the test item is
+   - Why you can't do it yourself
+   - What the user needs to do
+   - A link to the PR (e.g. `https://github.com/owner/repo/pull/123`) so they can go there directly
+
+### After attempting all items:
+
+- **All boxes ticked** → proceed to the polling loop.
+- **Some remain unticked** → tell the user exactly which items need their attention. Do NOT proceed to merge. The polling loop will re-check the test plan on each cycle (the user may tick boxes manually between cycles).
 
 ## Polling loop
 
@@ -48,11 +70,11 @@ After completing a review pass, automatically re-check for new or unresolved com
 
 ### On each cycle:
 
-1. **Check for unresolved comments**: Use `gh` to fetch all review comments and top-level PR comments **only for the same PRs you reviewed in the initial pass** — do not rediscover or add additional PRs in later cycles. A comment is "unresolved" if it has no reply from you yet, or if a reviewer has replied *after* your last reply on that thread. To identify your own replies, check if the comment body starts with the required prefix (`🤖 *beep boop`).
+1. **Check for unresolved comments AND test plan status**: Use `gh` to fetch all review comments and top-level PR comments **only for the same PRs you reviewed in the initial pass** — do not rediscover or add additional PRs in later cycles. A comment is "unresolved" if it has no reply from you yet, or if a reviewer has replied *after* your last reply on that thread. To identify your own replies, check if the comment body starts with the required prefix (`🤖 *beep boop`). Also re-parse the PR body to check if any test plan checkboxes are still unchecked.
 
-2. **If no unresolved comments remain**: The review is complete. Output the final summary (what was fixed, what was spun off, what was pushed back on) and stop.
+2. **If no unresolved comments remain AND all test plan checkboxes are `[x]`**: The review is complete. Output the final summary (what was fixed, what was spun off, what was pushed back on) and stop.
 
-3. **If there ARE unresolved comments**:
+3. **If there ARE unresolved comments OR unchecked test plan items**:
    - Push any pending changes first.
    - Display the cycle count and sleeping indicator, then wait 2 minutes:
 
@@ -89,4 +111,12 @@ Track which cycle you're on (1 through 5). Display it in the sleeping indicator 
 
 ## Final summary (output only when the loop ends)
 
-Give me a summary of what you fixed, what you spun off into separate PRs, and what you pushed back on. If the loop ended because all comments were resolved, say so. If it ended because the 5-cycle cap was hit, list any remaining unresolved comments.
+Give me a summary of what you fixed, what you spun off into separate PRs, and what you pushed back on. **Always include a link to each PR** (e.g. `https://github.com/owner/repo/pull/123`) so the user can click through directly. If the loop ended because all comments were resolved, say so. If it ended because the 5-cycle cap was hit, list any remaining unresolved comments with a link to the PR.
+
+### Merge gate
+
+The PR **must not be merged** unless:
+1. All reviewer comments are resolved (replied to, with fixes pushed)
+2. All test plan checkboxes are `[x]`
+
+If both conditions are met, say so clearly. If either condition fails, list what's still outstanding and do NOT merge.
