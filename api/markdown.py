@@ -79,7 +79,7 @@ def render(
 
     # --- Header ---
     date_str = now.strftime("%B %d, %Y")
-    title = extraction.title if extraction and extraction.title else ""
+    title = extraction.title if extraction else ""
     if title:
         lines.append(f"# {title}")
     else:
