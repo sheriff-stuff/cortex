@@ -416,11 +416,34 @@ class MeetingRepository:
                 )
             ).mappings().all()
 
+            if not rows:
+                return []
+
+            meeting_ids = [row["id"] for row in rows]
+
+            # Batch-fetch topics for all candidate meetings (avoids N+1)
+            topics_by_id: dict[int, list[dict]] = {mid: [] for mid in meeting_ids}
+            topic_rows = conn.execute(
+                select(
+                    meeting_items_table.c.meeting_id,
+                    meeting_items_table.c.data,
+                )
+                .where(
+                    meeting_items_table.c.meeting_id.in_(meeting_ids),
+                    meeting_items_table.c.item_type == "topics",
+                )
+                .order_by(
+                    meeting_items_table.c.meeting_id,
+                    meeting_items_table.c.sort_order,
+                )
+            ).all()
+            for meeting_id, data in topic_rows:
+                topics_by_id[meeting_id].append(json.loads(data))
+
             results = []
             for row in rows:
                 d = dict(row)
-                items = self._load_meeting_items(conn, d["id"])
-                d["topics"] = items.get("topics", [])
+                d["topics"] = topics_by_id.get(d["id"], [])
                 results.append(d)
             return results
 

@@ -97,11 +97,12 @@ def create_router(config: Config, repo: MeetingRepository) -> APIRouter:
                 detail="Request body must contain 'title' as a string",
             )
 
+        title = title.strip()[:500]
         repo.update_title(meeting_id, title)
         return {"title": title}
 
     @router.post("/backfill-titles")
-    async def backfill_titles() -> dict:
+    def backfill_titles() -> dict:
         """Generate titles for meetings that have an overview but no title."""
         from api.llm import query_ollama
 

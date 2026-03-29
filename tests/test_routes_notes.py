@@ -87,3 +87,45 @@ class TestSpeakers:
     def test_speakers_not_found(self, client):
         resp = client.get("/api/notes/nonexistent.wav/speakers")
         assert resp.status_code == 404
+
+
+class TestTitle:
+    def _seed(self, client, sample_sidecar, filename="title-test.wav"):
+        sidecar = sample_sidecar(filename=filename)
+        client.post("/api/test/seed-meeting", json={"sidecar": sidecar, "markdown": "md"})
+
+    def test_put_and_verify_title(self, client, sample_sidecar):
+        self._seed(client, sample_sidecar)
+        resp = client.put(
+            "/api/notes/title-test.wav/title",
+            json={"title": "Q1 Budget Review"},
+        )
+        assert resp.status_code == 200
+        assert resp.json()["title"] == "Q1 Budget Review"
+
+        # Verify via GET
+        resp = client.get("/api/notes/title-test.wav")
+        assert resp.json()["title"] == "Q1 Budget Review"
+
+    def test_put_title_trims_whitespace(self, client, sample_sidecar):
+        self._seed(client, sample_sidecar)
+        resp = client.put(
+            "/api/notes/title-test.wav/title",
+            json={"title": "  Trimmed Title  "},
+        )
+        assert resp.json()["title"] == "Trimmed Title"
+
+    def test_put_title_invalid_body(self, client, sample_sidecar):
+        self._seed(client, sample_sidecar)
+        resp = client.put("/api/notes/title-test.wav/title", json={"title": 123})
+        assert resp.status_code == 400
+
+    def test_put_title_not_found(self, client):
+        resp = client.put("/api/notes/nonexistent.wav/title", json={"title": "X"})
+        assert resp.status_code == 404
+
+    def test_backfill_no_meetings(self, client):
+        resp = client.post("/api/notes/backfill-titles")
+        assert resp.status_code == 200
+        assert resp.json()["updated"] == 0
+        assert resp.json()["total_without_title"] == 0

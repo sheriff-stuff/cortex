@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import type { MeetingNotes, SpeakerNameMap } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -81,9 +81,12 @@ export default function NotesView({ notes: initialNotes, onReset, onNotesUpdated
 
   const [editingTitle, setEditingTitle] = useState(false);
   const [titleDraft, setTitleDraft] = useState('');
+  const originalTitleRef = useRef('');
 
   const startEditingTitle = () => {
-    setTitleDraft(notes.title || '');
+    const current = notes.title || '';
+    setTitleDraft(current);
+    originalTitleRef.current = current;
     setEditingTitle(true);
   };
 
@@ -94,10 +97,10 @@ export default function NotesView({ notes: initialNotes, onReset, onNotesUpdated
     try {
       await api.updateTitle(notes.filename, trimmed);
     } catch {
-      // Revert on failure
-      setNotes((prev) => ({ ...prev, title: notes.title }));
+      // Revert to the title as it was when editing started
+      setNotes((prev) => ({ ...prev, title: originalTitleRef.current }));
     }
-  }, [titleDraft, notes.filename, notes.title]);
+  }, [titleDraft, notes.filename]);
 
   const cancelEditingTitle = () => setEditingTitle(false);
 
@@ -130,8 +133,11 @@ export default function NotesView({ notes: initialNotes, onReset, onNotesUpdated
             </div>
           ) : (
             <h1
-              className="text-2xl font-semibold group cursor-pointer flex items-center gap-2"
+              className="text-2xl font-semibold group cursor-pointer flex items-center gap-2 focus:outline-none focus:ring-2 focus:ring-ring rounded-sm"
+              role="button"
+              tabIndex={0}
               onClick={startEditingTitle}
+              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); startEditingTitle(); } }}
               title="Click to edit title"
             >
               {notes.title || `Notes \u2014 ${metadata.meeting_date}`}
