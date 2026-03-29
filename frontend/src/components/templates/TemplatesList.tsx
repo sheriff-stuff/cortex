@@ -101,6 +101,7 @@ export default function TemplatesList() {
                       variant="ghost"
                       size="icon-xs"
                       onClick={(e) => handleDuplicate(e, tmpl.id)}
+                      aria-label="Duplicate template"
                       title="Duplicate"
                     >
                       <Copy className="h-3.5 w-3.5" />
@@ -110,6 +111,7 @@ export default function TemplatesList() {
                         variant="ghost"
                         size="icon-xs"
                         onClick={(e) => handleDelete(e, tmpl.id)}
+                        aria-label="Delete template"
                         title="Delete"
                       >
                         <Trash2 className="h-3.5 w-3.5" />

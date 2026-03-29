@@ -59,7 +59,7 @@ export default function NotesView({ notes: initialNotes, onReset, onNotesUpdated
         const saved = await api.saveSpeakers(notes.filename, names);
         setSpeakerNames(saved);
       } catch {
-        // Keep local state even if save fails
+        // Keep optimistic local state — speaker names still usable if API is down
       }
     },
     [notes.filename],
@@ -73,6 +73,7 @@ export default function NotesView({ notes: initialNotes, onReset, onNotesUpdated
       const { job_id: newJobId } = await api.resummarize(notes.job_id);
       startPolling(newJobId);
     } catch {
+      // API call to start resummarize failed — reset UI state
       setResummarizing(false);
       setResummarizeProgress('');
     }

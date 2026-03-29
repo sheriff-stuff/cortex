@@ -14,6 +14,7 @@ import {
   AlertCircle,
   ChevronRight,
 } from 'lucide-react';
+import SummarySection from './SummarySection';
 
 interface Props {
   overview?: string;
@@ -26,31 +27,25 @@ interface Props {
 }
 
 export default function SummaryTab({ overview, keywords, topics, decisions, actionItems, questions, apply }: Props) {
+  const overviewText = overview
+    ? apply(overview)
+    : topics.length > 0
+      ? topics.slice(0, 3).map((t) => apply(t.description)).join(' ')
+      : null;
+
   return (
     <div className="space-y-6 pt-4">
       {/* Overview */}
-      {overview ? (
+      {overviewText && (
         <section>
           <h2 className="text-lg font-semibold mb-2">Overview</h2>
-          <p className="text-sm text-muted-foreground leading-relaxed">
-            {apply(overview)}
-          </p>
-        </section>
-      ) : topics.length > 0 && (
-        <section>
-          <h2 className="text-lg font-semibold mb-2">Overview</h2>
-          <p className="text-sm text-muted-foreground leading-relaxed">
-            {topics.slice(0, 3).map((t) => apply(t.description)).join(' ')}
-          </p>
+          <p className="text-sm text-muted-foreground leading-relaxed">{overviewText}</p>
         </section>
       )}
 
-      {(overview || topics.length > 0) && <Separator />}
-
       {/* Outline */}
       {topics.length > 0 && (
-        <section>
-          <h2 className="text-lg font-semibold mb-3">Outline</h2>
+        <SummarySection title="Outline" showSeparator={!!overviewText}>
           <div>
             {topics.map((topic, i) => {
               const points = topic.key_points && topic.key_points.length > 0
@@ -75,15 +70,12 @@ export default function SummaryTab({ overview, keywords, topics, decisions, acti
               );
             })}
           </div>
-        </section>
+        </SummarySection>
       )}
-
-      {actionItems.length > 0 && <Separator />}
 
       {/* Action Items */}
       {actionItems.length > 0 && (
-        <section>
-          <h2 className="text-lg font-semibold mb-3">Action Items</h2>
+        <SummarySection title="Action Items">
           <ul className="space-y-2">
             {actionItems.map((a, i) => (
               <li key={i} className="flex items-start gap-2.5">
@@ -97,15 +89,12 @@ export default function SummaryTab({ overview, keywords, topics, decisions, acti
               </li>
             ))}
           </ul>
-        </section>
+        </SummarySection>
       )}
-
-      {decisions.length > 0 && <Separator />}
 
       {/* Decisions */}
       {decisions.length > 0 && (
-        <section>
-          <h2 className="text-lg font-semibold mb-3">Decisions</h2>
+        <SummarySection title="Decisions">
           <ul className="space-y-2">
             {decisions.map((d, i) => (
               <li key={i} className="flex items-start gap-2.5">
@@ -119,15 +108,12 @@ export default function SummaryTab({ overview, keywords, topics, decisions, acti
               </li>
             ))}
           </ul>
-        </section>
+        </SummarySection>
       )}
-
-      {questions.length > 0 && <Separator />}
 
       {/* Questions & Answers */}
       {questions.length > 0 && (
-        <section>
-          <h2 className="text-lg font-semibold mb-3">Questions & Answers</h2>
+        <SummarySection title="Questions & Answers">
           <div className="space-y-4">
             {questions.map((q, i) => (
               <Fragment key={i}>
@@ -162,27 +148,23 @@ export default function SummaryTab({ overview, keywords, topics, decisions, acti
               </Fragment>
             ))}
           </div>
-        </section>
+        </SummarySection>
       )}
 
       {/* Keywords */}
       {keywords && keywords.length > 0 && (
-        <>
-          <Separator />
-          <section>
-            <h2 className="text-lg font-semibold mb-2">Keywords</h2>
-            <div className="flex flex-wrap gap-1.5">
-              {keywords.map((kw, i) => (
-                <span
-                  key={i}
-                  className="inline-block rounded-full bg-muted px-2.5 py-0.5 text-xs text-muted-foreground"
-                >
-                  {kw}
-                </span>
-              ))}
-            </div>
-          </section>
-        </>
+        <SummarySection title="Keywords">
+          <div className="flex flex-wrap gap-1.5">
+            {keywords.map((kw, i) => (
+              <span
+                key={i}
+                className="inline-block rounded-full bg-muted px-2.5 py-0.5 text-xs text-muted-foreground"
+              >
+                {kw}
+              </span>
+            ))}
+          </div>
+        </SummarySection>
       )}
     </div>
   );
