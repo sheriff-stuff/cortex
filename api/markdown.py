@@ -79,7 +79,11 @@ def render(
 
     # --- Header ---
     date_str = now.strftime("%B %d, %Y")
-    lines.append(f"# Meeting Summary - {now.strftime('%Y-%m-%d')}")
+    title = extraction.title if extraction and extraction.title else ""
+    if title:
+        lines.append(f"# {title}")
+    else:
+        lines.append(f"# Meeting Summary - {now.strftime('%Y-%m-%d')}")
     lines.append("")
     lines.append(f"**Duration**: {_format_duration(duration)}  ")
     lines.append(f"**Speakers**: {transcript.speaker_count}  ")
@@ -226,6 +230,7 @@ def build_sidecar_dict(
     )
 
     return {
+        "title": extraction.title if extraction else "",
         "metadata": metadata,
         "summary": {
             "topic_count": len(extraction.topics) if extraction else 0,

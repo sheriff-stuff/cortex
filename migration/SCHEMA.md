@@ -26,6 +26,7 @@ When the schema in `db.py` changes, compare this document against the new table 
 |--------|------|----------|---------|-------|
 | id | INTEGER | NO | auto | Primary key, autoincrement |
 | filename | VARCHAR(255) | NO | — | Unique |
+| title | VARCHAR(500) | YES | — | LLM-generated meeting title |
 | job_id | VARCHAR(12) | YES | — | FK to jobs.id |
 | meeting_date | VARCHAR(10) | YES | — | YYYY-MM-DD |
 | meeting_time | VARCHAR(5) | YES | — | HH:MM |

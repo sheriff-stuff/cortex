@@ -3,6 +3,7 @@
 EXTRACTION_SCHEMA = """\
 Return a JSON object with exactly these keys:
 
+- "title": str (concise 5-8 word title capturing the meeting's overarching subject)
 - "overview": str (2-3 sentence summary of the entire meeting — its purpose, main themes, and key outcomes)
 - "topics": list of {{"title": str, "key_points": [str] (2-5 bullet points summarizing the discussion flow, attributing key arguments to speakers), "speakers": [str], "first_mentioned": "MM:SS"}}
 - "decisions": list of {{"decision": str, "speaker": str, "timestamp": "MM:SS"}}
@@ -15,7 +16,8 @@ You are analyzing a meeting transcript. Extract structured information as JSON.
 Only extract what is explicitly stated in the transcript. Do not infer or hallucinate.
 
 Rules:
-- Start with "overview": a concise 2-3 sentence summary of what the meeting was about, its purpose, and key outcomes
+- Start with "title": a concise 5-8 word title that captures what the meeting is about overall (e.g., "Q1 Budget Review and Planning", "Sprint 12 Kickoff — Auth Migration")
+- Then "overview": a concise 2-3 sentence summary of what the meeting was about, its purpose, and key outcomes
 - Consolidate related discussion into 5-8 broad themes for "topics" — do NOT create many narrow micro-topics. Group related subjects together under one clear title
 - Each topic must have "key_points": 2-5 narrative bullet points that capture the discussion flow. Attribute key arguments and proposals to speakers (e.g., "Speaker 2 proposed using a business credit card to track shared expenses"). Include outcomes or conclusions where applicable
 - Action items must be clear, standalone sentences that someone who wasn't in the meeting could understand (e.g., "Create a one-page website to establish company presence" NOT "Put it on there")

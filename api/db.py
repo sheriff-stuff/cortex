@@ -46,6 +46,7 @@ meetings_table = Table(
     metadata,
     Column("id", Integer, primary_key=True, autoincrement=True),
     Column("filename", String(255), unique=True, nullable=False),
+    Column("title", String(500), nullable=True),
     Column("job_id", String(12), nullable=True),
     Column("meeting_date", String(10)),
     Column("meeting_time", String(5)),
@@ -204,6 +205,7 @@ class MeetingRepository:
             result = conn.execute(
                 insert(meetings_table).values(
                     filename=sidecar.get("filename", ""),
+                    title=sidecar.get("title", ""),
                     job_id=job_id,
                     meeting_date=meta.get("meeting_date", ""),
                     meeting_time=meta.get("meeting_time", ""),
@@ -245,6 +247,7 @@ class MeetingRepository:
             rows = conn.execute(
                 select(
                     meetings_table.c.filename,
+                    meetings_table.c.title,
                     meetings_table.c.meeting_date,
                     meetings_table.c.meeting_time,
                     meetings_table.c.duration,
@@ -321,6 +324,7 @@ class MeetingRepository:
 
             return {
                 "filename": row["filename"],
+                "title": row.get("title") or "",
                 "job_id": row.get("job_id"),
                 "metadata": self._build_meeting_meta(row),
                 "summary": {
@@ -440,6 +444,7 @@ class MeetingRepository:
                 update(meetings_table)
                 .where(meetings_table.c.id == meeting_id)
                 .values(
+                    title=sidecar.get("title", ""),
                     markdown_content=markdown_content,
                     llm_model=meta.get("llm_model", ""),
                     topic_count=summary.get("topic_count", 0),
