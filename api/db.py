@@ -242,7 +242,12 @@ class MeetingRepository:
             return row is not None
 
     def list_meetings(self) -> list[dict]:
-        """Return summary dicts matching the GET /api/notes response shape."""
+        """Return summary dicts for GET /api/notes.
+
+        Each dict contains: filename, title, meeting_date, meeting_time,
+        duration, speakers, topic_count, action_item_count.
+        The title may be empty for meetings created before the title feature.
+        """
         with self._engine.connect() as conn:
             rows = conn.execute(
                 select(
@@ -257,7 +262,12 @@ class MeetingRepository:
                 )
                 .order_by(meetings_table.c.filename.desc())
             ).mappings().all()
-            return [dict(r) for r in rows]
+            results = []
+            for r in rows:
+                d = dict(r)
+                d["title"] = d.get("title") or ""
+                results.append(d)
+            return results
 
     @staticmethod
     def _build_meeting_meta(row: dict) -> dict:
