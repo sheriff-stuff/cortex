@@ -5,6 +5,7 @@ from datetime import datetime, timezone
 
 from sqlalchemy import (
     Column,
+    DateTime,
     Float,
     Index,
     Integer,
@@ -37,8 +38,8 @@ jobs_table = Table(
     Column("template_id", Integer, nullable=True),
     Column("phase", String(20), nullable=True),
     Column("meeting_id", Integer, nullable=True),
-    Column("created_at", String(30), nullable=False),
-    Column("updated_at", String(30), nullable=False),
+    Column("created_at", DateTime(timezone=True), nullable=False),
+    Column("updated_at", DateTime(timezone=True), nullable=False),
 )
 
 meetings_table = Table(
@@ -64,7 +65,7 @@ meetings_table = Table(
     Column("question_count", Integer, default=0),
     Column("overview", Text, nullable=True),
     Column("keywords", Text, nullable=True),  # JSON string
-    Column("created_at", String(30), nullable=False),
+    Column("created_at", DateTime(timezone=True), nullable=False),
 )
 
 meeting_items_table = Table(
@@ -111,13 +112,13 @@ templates_table = Table(
     Column("description", Text, nullable=False, default=""),
     Column("prompt_text", Text, nullable=False),
     Column("is_default", Integer, nullable=False, default=0),
-    Column("created_at", String(30), nullable=False),
-    Column("updated_at", String(30), nullable=False),
+    Column("created_at", DateTime(timezone=True), nullable=False),
+    Column("updated_at", DateTime(timezone=True), nullable=False),
 )
 
 
-def _now_iso() -> str:
-    return datetime.now(timezone.utc).isoformat(timespec="seconds")
+def _now_utc() -> datetime:
+    return datetime.now(timezone.utc).replace(microsecond=0)
 
 
 class MeetingRepository:
@@ -146,7 +147,7 @@ class MeetingRepository:
     def create_job(
         self, job_id: str, source_filename: str, template_id: int | None = None,
     ) -> None:
-        now = _now_iso()
+        now = _now_utc()
         with self._engine.begin() as conn:
             conn.execute(
                 insert(jobs_table).values(
@@ -170,7 +171,7 @@ class MeetingRepository:
             return dict(row)
 
     def update_job(self, job_id: str, **fields: object) -> None:
-        fields["updated_at"] = _now_iso()
+        fields["updated_at"] = _now_utc()
         with self._engine.begin() as conn:
             conn.execute(
                 update(jobs_table).where(jobs_table.c.id == job_id).values(**fields)
@@ -185,7 +186,7 @@ class MeetingRepository:
                 .values(
                     status="failed",
                     error="Server restarted during processing",
-                    updated_at=_now_iso(),
+                    updated_at=_now_utc(),
                 )
             )
             return result.rowcount
@@ -199,7 +200,7 @@ class MeetingRepository:
         meta = sidecar.get("metadata", {})
         summary = sidecar.get("summary", {})
         quality = meta.get("quality_flags")
-        now = _now_iso()
+        now = _now_utc()
 
         with self._engine.begin() as conn:
             result = conn.execute(
@@ -581,7 +582,7 @@ class MeetingRepository:
 
     def create_template(self, name: str, description: str, prompt_text: str) -> int:
         """Create a new template. Returns the new ID."""
-        now = _now_iso()
+        now = _now_utc()
         with self._engine.begin() as conn:
             result = conn.execute(
                 insert(templates_table).values(
@@ -597,7 +598,7 @@ class MeetingRepository:
 
     def update_template(self, template_id: int, **fields: object) -> None:
         """Update a template's fields."""
-        fields["updated_at"] = _now_iso()
+        fields["updated_at"] = _now_utc()
         with self._engine.begin() as conn:
             conn.execute(
                 update(templates_table)
@@ -645,7 +646,7 @@ def _seed_default_template(engine: Engine) -> None:
     """Insert or update the default extraction template."""
     from api.prompts import DEFAULT_INSTRUCTIONS
 
-    now = _now_iso()
+    now = _now_utc()
     with engine.connect() as conn:
         row = conn.execute(
             select(templates_table.c.id).where(templates_table.c.is_default == 1)
