@@ -29,10 +29,18 @@ api = [
 postgres = [
     "psycopg2-binary>=2.9",
 ]
+test = [
+    "pytest>=7.4",
+    "pytest-asyncio>=0.23",
+    "httpx>=0.25",
+]
 
 [project.scripts]
 meeting-notes = "api.cli:main"
 meeting-notes-api = "api.server:serve"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
 
 [tool.setuptools.packages.find]
 where = ["."]
