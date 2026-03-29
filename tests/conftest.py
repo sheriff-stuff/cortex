@@ -15,6 +15,13 @@ def _make_sidecar(
     overview="Test meeting overview",
 ):
     """Build a realistic sidecar dict."""
+    # Normalize lists first so summary counts always match actual items
+    topics_list = [{"title": "Project Roadmap", "description": "Discussed roadmap", "key_points": ["Timeline set"]}] if topics is None else topics
+    decisions_list = [{"decision": "Ship v2 by March", "speaker": "Alice", "timestamp": "05:30"}] if decisions is None else decisions
+    action_items_list = [{"task": "Write the tech spec", "speaker": "Bob", "deadline": "Friday", "timestamp": "10:00"}] if action_items is None else action_items
+    questions_list = [{"question": "What about testing?", "asker": "Charlie", "timestamp": "15:00"}] if questions is None else questions
+    keywords_list = ["testing", "automation"] if keywords is None else keywords
+
     return {
         "filename": filename,
         "metadata": {
@@ -28,17 +35,17 @@ def _make_sidecar(
             "llm_model": "qwen2.5-coder:32b",
         },
         "summary": {
-            "topic_count": len(topics or []),
-            "decision_count": len(decisions or []),
-            "action_item_count": len(action_items or []),
-            "question_count": len(questions or []),
+            "topic_count": len(topics_list),
+            "decision_count": len(decisions_list),
+            "action_item_count": len(action_items_list),
+            "question_count": len(questions_list),
         },
         "overview": overview,
-        "keywords": keywords or ["testing", "automation"],
-        "topics": topics or [{"title": "Project Roadmap", "description": "Discussed roadmap", "key_points": ["Timeline set"]}],
-        "decisions": decisions or [{"decision": "Ship v2 by March", "speaker": "Alice", "timestamp": "05:30"}],
-        "action_items": action_items or [{"task": "Write the tech spec", "speaker": "Bob", "deadline": "Friday", "timestamp": "10:00"}],
-        "questions": questions or [{"question": "What about testing?", "asker": "Charlie", "timestamp": "15:00"}],
+        "keywords": keywords_list,
+        "topics": topics_list,
+        "decisions": decisions_list,
+        "action_items": action_items_list,
+        "questions": questions_list,
     }
 
 
