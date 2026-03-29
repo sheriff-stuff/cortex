@@ -57,6 +57,7 @@ Before the PR can be merged, **every checkbox in the test plan must be ticked**.
    - What the test item is
    - Why you can't do it yourself
    - What the user needs to do
+   - A link to the PR (e.g. `https://github.com/owner/repo/pull/123`) so they can go there directly
 
 ### After attempting all items:
 
@@ -110,7 +111,7 @@ Track which cycle you're on (1 through 5). Display it in the sleeping indicator 
 
 ## Final summary (output only when the loop ends)
 
-Give me a summary of what you fixed, what you spun off into separate PRs, and what you pushed back on. If the loop ended because all comments were resolved, say so. If it ended because the 5-cycle cap was hit, list any remaining unresolved comments.
+Give me a summary of what you fixed, what you spun off into separate PRs, and what you pushed back on. **Always include a link to each PR** (e.g. `https://github.com/owner/repo/pull/123`) so the user can click through directly. If the loop ended because all comments were resolved, say so. If it ended because the 5-cycle cap was hit, list any remaining unresolved comments with a link to the PR.
 
 ### Merge gate
 
