@@ -1,4 +1,4 @@
-Find the open PR associated with the current branch and review all comments left by reviewers.
+Find and review all open PRs created during this conversation. If no PRs were created in this session, fall back to the open PR associated with the current branch. For each PR, review all comments left by reviewers.
 
 ## Before starting
 
