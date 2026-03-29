@@ -40,6 +40,23 @@ def create_app(config: Config | None = None) -> FastAPI:
     app.include_router(notes_router(repo))
     app.include_router(templates_router(config, repo))
 
+    # --- Test-only seed endpoint (only available with in-memory DB) ---
+    if ":memory:" in config.database_url:
+
+        @app.post("/api/test/seed-meeting", status_code=201)
+        async def seed_meeting(body: dict) -> dict:
+            """Seed a meeting for E2E tests. Only available with in-memory DB."""
+            sidecar = body.get("sidecar")
+            if not isinstance(sidecar, dict):
+                raise HTTPException(
+                    status_code=400,
+                    detail="Field 'sidecar' is required and must be an object",
+                )
+            meeting_id = repo.save_meeting(
+                sidecar, body.get("markdown", ""), body.get("job_id"),
+            )
+            return {"meeting_id": meeting_id, "filename": sidecar.get("filename", "")}
+
     return app
 
 
