@@ -118,7 +118,7 @@ templates_table = Table(
 
 
 def _now_utc() -> datetime:
-    return datetime.now(timezone.utc)
+    return datetime.now(timezone.utc).replace(microsecond=0)
 
 
 class MeetingRepository:
