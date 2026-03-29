@@ -62,6 +62,14 @@ async function saveSpeakers(filename: string, speakerNames: SpeakerNameMap): Pro
   return data.speaker_names;
 }
 
+async function updateTitle(filename: string, title: string): Promise<string> {
+  const data = await fetchApi<{ title: string }>(
+    `/api/notes/${encodeURIComponent(filename)}/title`,
+    { method: 'PUT', ...jsonBody({ title }) },
+  );
+  return data.title;
+}
+
 // --- Templates ---
 
 function listTemplates(): Promise<TemplateSummary[]> {
@@ -101,7 +109,7 @@ function renderExample(promptText: string): Promise<{
 }
 
 export const api = {
-  upload, getJob, listJobs, listNotes, getSavedNotes, getSpeakers, saveSpeakers,
+  upload, getJob, listJobs, listNotes, getSavedNotes, getSpeakers, saveSpeakers, updateTitle,
   listTemplates, getTemplate, createTemplate, updateTemplate, deleteTemplate, duplicateTemplate,
   renderExample, resummarize,
 };

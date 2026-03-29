@@ -1,9 +1,9 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import type { MeetingNotes, SpeakerNameMap } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { ArrowLeft, RefreshCw, Loader2 } from 'lucide-react';
+import { ArrowLeft, RefreshCw, Loader2, Pencil, Check, X } from 'lucide-react';
 import SpeakerEditor from '@/components/SpeakerEditor';
 import SummaryTab from '@/components/notes/SummaryTab';
 import TranscriptTab from '@/components/notes/TranscriptTab';
@@ -79,6 +79,31 @@ export default function NotesView({ notes: initialNotes, onReset, onNotesUpdated
     }
   }, [notes.job_id, startPolling]);
 
+  const [editingTitle, setEditingTitle] = useState(false);
+  const [titleDraft, setTitleDraft] = useState('');
+  const originalTitleRef = useRef('');
+
+  const startEditingTitle = () => {
+    const current = notes.title || '';
+    setTitleDraft(current);
+    originalTitleRef.current = current;
+    setEditingTitle(true);
+  };
+
+  const saveTitle = useCallback(async () => {
+    const trimmed = titleDraft.trim();
+    setEditingTitle(false);
+    setNotes((prev) => ({ ...prev, title: trimmed }));
+    try {
+      await api.updateTitle(notes.filename, trimmed);
+    } catch {
+      // Revert to the title as it was when editing started
+      setNotes((prev) => ({ ...prev, title: originalTitleRef.current }));
+    }
+  }, [titleDraft, notes.filename]);
+
+  const cancelEditingTitle = () => setEditingTitle(false);
+
   const hasTranscript = notes.transcript && notes.transcript.length > 0;
 
   return (
@@ -86,9 +111,39 @@ export default function NotesView({ notes: initialNotes, onReset, onNotesUpdated
       {/* Header */}
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-semibold">
-            {notes.title || `Notes \u2014 ${metadata.meeting_date}`}
-          </h1>
+          {editingTitle ? (
+            <div className="flex items-center gap-2">
+              <input
+                autoFocus
+                className="text-2xl font-semibold h-auto py-1 px-2 border border-border rounded-md bg-background w-full outline-none focus:ring-2 focus:ring-ring"
+                value={titleDraft}
+                onChange={(e) => setTitleDraft(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') saveTitle();
+                  if (e.key === 'Escape') cancelEditingTitle();
+                }}
+                placeholder="Meeting title..."
+              />
+              <Button variant="ghost" size="icon" onClick={saveTitle} className="shrink-0">
+                <Check className="h-4 w-4" />
+              </Button>
+              <Button variant="ghost" size="icon" onClick={cancelEditingTitle} className="shrink-0">
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+          ) : (
+            <h1
+              className="text-2xl font-semibold group cursor-pointer flex items-center gap-2 focus:outline-none focus:ring-2 focus:ring-ring rounded-sm"
+              role="button"
+              tabIndex={0}
+              onClick={startEditingTitle}
+              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); startEditingTitle(); } }}
+              title="Click to edit title"
+            >
+              {notes.title || `Notes \u2014 ${metadata.meeting_date}`}
+              <Pencil className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+            </h1>
+          )}
           <div className="flex flex-wrap gap-2 mt-2">
             <Badge variant="secondary">Duration: {metadata.duration}</Badge>
             <Badge variant="secondary">Speakers: {metadata.speakers}</Badge>

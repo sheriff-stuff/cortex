@@ -1,12 +1,17 @@
 """Notes and speaker API routes."""
 
+import logging
+
 from fastapi import APIRouter, HTTPException
 
+from api.config import Config
 from api.db import MeetingRepository
 from api.responses import check_filename, response_from_sidecar
 
+log = logging.getLogger(__name__)
 
-def create_router(repo: MeetingRepository) -> APIRouter:
+
+def create_router(config: Config, repo: MeetingRepository) -> APIRouter:
     router = APIRouter(prefix="/api/notes")
 
     @router.get("")
@@ -75,5 +80,58 @@ def create_router(repo: MeetingRepository) -> APIRouter:
 
         repo.save_speaker_names(meeting_id, speaker_names)
         return {"speaker_names": repo.get_speaker_names(meeting_id)}
+
+    @router.put("/{filename}/title")
+    async def update_title(filename: str, body: dict) -> dict:
+        """Update the title for a meeting."""
+        check_filename(filename)
+
+        meeting_id = repo.get_meeting_id_by_filename(filename)
+        if meeting_id is None:
+            raise HTTPException(status_code=404, detail="Meeting not found")
+
+        title = body.get("title")
+        if not isinstance(title, str):
+            raise HTTPException(
+                status_code=400,
+                detail="Request body must contain 'title' as a string",
+            )
+
+        title = title.strip()[:500]
+        repo.update_title(meeting_id, title)
+        return {"title": title}
+
+    @router.post("/backfill-titles")
+    def backfill_titles() -> dict:
+        """Generate titles for meetings that have an overview but no title."""
+        from api.llm import query_ollama
+
+        meetings = repo.get_meetings_without_title()
+        updated = 0
+
+        for meeting in meetings:
+            overview = meeting["overview"]
+            topics = meeting.get("topics", [])
+            topic_titles = [t.get("title", "") for t in topics if t.get("title")]
+
+            prompt_parts = [f"Meeting overview: {overview}"]
+            if topic_titles:
+                prompt_parts.append(f"Topics discussed: {', '.join(topic_titles)}")
+            prompt_parts.append(
+                "\nBased on the above, generate a concise 5-8 word title that captures "
+                "what this meeting was about. Return ONLY the title, nothing else."
+            )
+            prompt = "\n".join(prompt_parts)
+
+            try:
+                title = query_ollama(prompt, config).strip().strip('"\'')
+                if title:
+                    repo.update_title(meeting["id"], title)
+                    updated += 1
+                    log.info("Backfilled title for meeting %d: %s", meeting["id"], title)
+            except Exception:
+                log.warning("Failed to generate title for meeting %d", meeting["id"], exc_info=True)
+
+        return {"updated": updated, "total_without_title": len(meetings)}
 
     return router

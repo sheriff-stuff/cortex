@@ -390,6 +390,63 @@ class MeetingRepository:
                         )
                     )
 
+    # --- Title ---
+
+    def update_title(self, meeting_id: int, title: str) -> None:
+        """Update the title for a meeting."""
+        with self._engine.begin() as conn:
+            conn.execute(
+                update(meetings_table)
+                .where(meetings_table.c.id == meeting_id)
+                .values(title=title)
+            )
+
+    def get_meetings_without_title(self) -> list[dict]:
+        """Return meetings that have an overview but no title (for backfill)."""
+        with self._engine.connect() as conn:
+            rows = conn.execute(
+                select(
+                    meetings_table.c.id,
+                    meetings_table.c.overview,
+                )
+                .where(
+                    (meetings_table.c.title.is_(None) | (meetings_table.c.title == ""))
+                    & (meetings_table.c.overview.isnot(None))
+                    & (meetings_table.c.overview != "")
+                )
+            ).mappings().all()
+
+            if not rows:
+                return []
+
+            meeting_ids = [row["id"] for row in rows]
+
+            # Batch-fetch topics for all candidate meetings (avoids N+1)
+            topics_by_id: dict[int, list[dict]] = {mid: [] for mid in meeting_ids}
+            topic_rows = conn.execute(
+                select(
+                    meeting_items_table.c.meeting_id,
+                    meeting_items_table.c.data,
+                )
+                .where(
+                    meeting_items_table.c.meeting_id.in_(meeting_ids),
+                    meeting_items_table.c.item_type == "topics",
+                )
+                .order_by(
+                    meeting_items_table.c.meeting_id,
+                    meeting_items_table.c.sort_order,
+                )
+            ).all()
+            for meeting_id, data in topic_rows:
+                topics_by_id[meeting_id].append(json.loads(data))
+
+            results = []
+            for row in rows:
+                d = dict(row)
+                d["topics"] = topics_by_id.get(d["id"], [])
+                results.append(d)
+            return results
+
     # --- Transcript Segments ---
 
     def save_transcript_segments(self, meeting_id: int, segments: list) -> None:

@@ -37,7 +37,7 @@ def create_app(config: Config | None = None) -> FastAPI:
     )
 
     app.include_router(jobs_router(config, repo))
-    app.include_router(notes_router(repo))
+    app.include_router(notes_router(config, repo))
     app.include_router(templates_router(config, repo))
 
     # --- Test-only seed endpoint (only available with in-memory DB) ---
