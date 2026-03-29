@@ -19,10 +19,15 @@ warnings.filterwarnings("ignore", category=UserWarning, module="pyannote.audio.u
 @click.option("--reload", is_flag=True, default=False, help="Auto-reload on code changes (dev mode)")
 def serve(host, port, config_path, database_url, reload):
     """Start the meeting-notes API server."""
+    import os
     import uvicorn
 
     from api.api import create_app
     from api.config import load_config
+
+    # CLI flag takes priority, then env var
+    if database_url is None:
+        database_url = os.environ.get("MEETING_NOTES_DATABASE_URL")
 
     cli_overrides = {}
     if database_url is not None:

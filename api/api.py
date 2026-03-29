@@ -496,6 +496,17 @@ def create_app(config: Config | None = None) -> FastAPI:
         asyncio.create_task(process_resummarize_job(new_job, config, repo))
         return {"job_id": new_job_id, "status": "queued"}
 
+    # --- Test-only seed endpoint (only available with in-memory DB) ---
+    if ":memory:" in config.database_url:
+
+        @app.post("/api/test/seed-meeting", status_code=201)
+        async def seed_meeting(body: dict) -> dict:
+            """Seed a meeting for E2E tests. Only available with in-memory DB."""
+            meeting_id = repo.save_meeting(
+                body["sidecar"], body.get("markdown", ""), body.get("job_id"),
+            )
+            return {"meeting_id": meeting_id, "filename": body["sidecar"].get("filename", "")}
+
     return app
 
 

@@ -3,6 +3,8 @@ import { defineConfig } from 'vite'
 import tailwindcss from '@tailwindcss/vite'
 import react from '@vitejs/plugin-react'
 
+const apiTarget = process.env.VITE_API_URL || 'http://localhost:9000'
+
 export default defineConfig({
   plugins: [tailwindcss(), react()],
   resolve: {
@@ -13,11 +15,11 @@ export default defineConfig({
   server: {
     proxy: {
       '/api': {
-        target: 'http://localhost:9000',
+        target: apiTarget,
         changeOrigin: true,
       },
       '/jobs': {
-        target: 'http://localhost:9000',
+        target: apiTarget,
         changeOrigin: true,
       },
     },
