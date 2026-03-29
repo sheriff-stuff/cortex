@@ -444,6 +444,13 @@ def benchmark_pipeline(file_path: Path, config: Config, no_llm: bool = False,
     return report
 
 
+def _format_time(seconds: float) -> str:
+    """Format seconds as human-readable time string."""
+    if seconds >= 60:
+        return f"{seconds / 60:.1f}m"
+    return f"{seconds:.2f}s"
+
+
 def _format_timing_line(name: str, elapsed: float, total: float, depth: int,
                         max_bar_width: int = 40) -> str:
     """Format a single timing line for the text report."""
@@ -453,12 +460,7 @@ def _format_timing_line(name: str, elapsed: float, total: float, depth: int,
     bar_len = int(pct / 100 * max_bar_width)
     bar = "\u2588" * bar_len
 
-    if elapsed >= 60:
-        time_str = f"{elapsed / 60:.1f}m"
-    else:
-        time_str = f"{elapsed:.2f}s"
-
-    return f"{padded_name:<38} {time_str:>8}  {pct:>5.1f}%  {bar}"
+    return f"{padded_name:<38} {_format_time(elapsed):>8}  {pct:>5.1f}%  {bar}"
 
 
 def _walk_timing(record: dict, total: float, depth: int, lines: list[str]) -> None:
@@ -470,8 +472,21 @@ def _walk_timing(record: dict, total: float, depth: int, lines: list[str]) -> No
         _walk_timing(child, total, depth + 1, lines)
 
 
+def _walk_timing_md(record: dict, total: float, depth: int, rows: list[str]) -> None:
+    """Recursively walk the timing tree and format markdown table rows."""
+    indent = "\u00a0\u00a0\u00a0\u00a0" * depth
+    name = f"{indent}{record['name']}"
+    elapsed = record["elapsed_seconds"]
+    pct = (elapsed / total * 100) if total > 0 else 0.0
+    bar_len = int(pct / 2.5)  # max ~40 chars at 100%
+    bar = "\u2588" * bar_len
+    rows.append(f"| {name} | {_format_time(elapsed)} | {pct:.1f}% | {bar} |")
+    for child in record.get("children", []):
+        _walk_timing_md(child, total, depth + 1, rows)
+
+
 def format_report_text(report: dict) -> str:
-    """Format the benchmark report as human-readable text."""
+    """Format the benchmark report as human-readable text for terminal display."""
     lines: list[str] = []
     sep = "\u2550" * 62
     thin_sep = "\u2500" * 62
@@ -482,7 +497,6 @@ def format_report_text(report: dict) -> str:
     lines.append(sep)
     lines.append("")
 
-    # System
     sys_info = report["system"]
     lines.append("System")
     lines.append(f"  OS:             {sys_info['os']}")
@@ -503,7 +517,6 @@ def format_report_text(report: dict) -> str:
         lines.append(f"  WhisperX:       {sys_info['whisperx']}")
     lines.append("")
 
-    # Input
     inp = report["input"]
     lines.append("Input")
     lines.append(f"  File:           {inp['file']}")
@@ -513,7 +526,6 @@ def format_report_text(report: dict) -> str:
     lines.append(f"  WAV size:       {inp['wav_size_mb']} MB")
     lines.append("")
 
-    # Config
     cfg = report["config"]
     lines.append("Config")
     lines.append(f"  Whisper model:  {cfg['whisper_model']}")
@@ -523,7 +535,6 @@ def format_report_text(report: dict) -> str:
     lines.append(f"  Chunk overlap:  {cfg['chunk_overlap_seconds']}s")
     lines.append("")
 
-    # Timing
     lines.append(thin_sep)
     lines.append("  STAGE TIMING")
     lines.append(thin_sep)
@@ -537,14 +548,10 @@ def format_report_text(report: dict) -> str:
         _walk_timing(child, total, 0, lines)
 
     lines.append("\u2500" * 70)
-    if total >= 60:
-        total_str = f"{total / 60:.1f}m"
-    else:
-        total_str = f"{total:.2f}s"
+    total_str = _format_time(total)
     lines.append(f"{'TOTAL':<38} {total_str:>8}  100.0%")
     lines.append("")
 
-    # Transcript stats
     ts = report["transcript"]
     lines.append("Transcript")
     lines.append(f"  Segments:       {ts['segment_count']}")
@@ -553,7 +560,6 @@ def format_report_text(report: dict) -> str:
     lines.append(f"  Language:       {ts['language']}")
     lines.append("")
 
-    # LLM stats
     if report.get("llm"):
         llm = report["llm"]
         lines.append("LLM Extraction")
@@ -563,7 +569,6 @@ def format_report_text(report: dict) -> str:
             lines.append(f"  Avg tokens:     ~{avg_tokens:,} per chunk")
         lines.append("")
 
-    # Extraction stats
     if report.get("extraction"):
         ext = report["extraction"]
         lines.append("Extraction Results")
@@ -574,14 +579,12 @@ def format_report_text(report: dict) -> str:
         lines.append(f"  Keywords:       {ext['keyword_count']}")
         lines.append("")
 
-    # Quality
     if report.get("quality"):
         q = report["quality"]
         type_str = ", ".join(f"{count} {typ}" for typ, count in q["by_type"].items())
         lines.append(f"Quality Flags:    {q['total_flags']} ({type_str})")
         lines.append("")
 
-    # Memory
     mem = report["memory"]
     lines.append("Memory")
     lines.append(f"  Process RSS start:                {mem['process_rss_start_mb']:.0f} MB")
@@ -591,12 +594,164 @@ def format_report_text(report: dict) -> str:
         lines.append(f"  GPU peak (transcription):          {mem['gpu_peak_after_transcription_mb']:.0f} MB")
     lines.append("")
 
-    # Processing speed
     inp_duration = report["input"]["duration_seconds"]
     if total > 0:
         realtime_ratio = inp_duration / total
         lines.append(f"Speed:            {realtime_ratio:.2f}x realtime "
                      f"({inp['duration_formatted']} audio in {total_str})")
     lines.append("")
+
+    return "\n".join(lines)
+
+
+def format_report_markdown(report: dict) -> str:
+    """Format the benchmark report as Markdown (for humans reading in an editor/viewer)."""
+    lines: list[str] = []
+
+    lines.append("# Pipeline Benchmark Report")
+    lines.append("")
+
+    # System
+    sys_info = report["system"]
+    lines.append("## System")
+    lines.append("")
+    lines.append("| Property | Value |")
+    lines.append("|----------|-------|")
+    lines.append(f"| OS | {sys_info['os']} |")
+    lines.append(f"| Python | {sys_info['python']} |")
+    lines.append(f"| CPU | {sys_info['cpu']} |")
+    if "ram_total_gb" in sys_info:
+        lines.append(f"| RAM | {sys_info['ram_total_gb']} GB total, "
+                     f"{sys_info['ram_available_gb']} GB available |")
+    if "torch" in sys_info:
+        torch_val = sys_info['torch']
+        if sys_info.get("cuda_available"):
+            torch_val += f" (CUDA {sys_info.get('cuda_version', '?')})"
+        lines.append(f"| Torch | {torch_val} |")
+    if sys_info.get("gpu_name"):
+        lines.append(f"| GPU | {sys_info['gpu_name']} ({sys_info.get('gpu_memory_gb', '?')} GB) |")
+    if "whisperx" in sys_info:
+        lines.append(f"| WhisperX | {sys_info['whisperx']} |")
+    lines.append("")
+
+    # Input
+    inp = report["input"]
+    lines.append("## Input")
+    lines.append("")
+    lines.append("| Property | Value |")
+    lines.append("|----------|-------|")
+    lines.append(f"| File | `{inp['file']}` |")
+    lines.append(f"| Format | {inp['format']} |")
+    lines.append(f"| Duration | {inp['duration_formatted']} |")
+    lines.append(f"| File size | {inp['file_size_mb']} MB |")
+    lines.append(f"| WAV size | {inp['wav_size_mb']} MB |")
+    lines.append("")
+
+    # Config
+    cfg = report["config"]
+    lines.append("## Config")
+    lines.append("")
+    lines.append("| Setting | Value |")
+    lines.append("|---------|-------|")
+    lines.append(f"| Whisper model | `{cfg['whisper_model']}` |")
+    lines.append(f"| Device | {cfg['whisper_device']} / {cfg['whisper_compute_type']} |")
+    lines.append(f"| LLM model | `{cfg['llm_model']}` |")
+    lines.append(f"| Chunk tokens | {cfg['chunk_max_tokens']} |")
+    lines.append(f"| Chunk overlap | {cfg['chunk_overlap_seconds']}s |")
+    lines.append("")
+
+    # Timing
+    timing = report["timing"]
+    total = timing["elapsed_seconds"]
+    total_str = _format_time(total)
+
+    lines.append("## Stage Timing")
+    lines.append("")
+    lines.append("| Stage | Time | % | Bar |")
+    lines.append("|-------|-----:|--:|-----|")
+    for child in timing.get("children", []):
+        _walk_timing_md(child, total, 0, lines)
+    lines.append(f"| **TOTAL** | **{total_str}** | **100.0%** | |")
+    lines.append("")
+
+    # Transcript
+    ts = report["transcript"]
+    lines.append("## Transcript")
+    lines.append("")
+    lines.append("| Metric | Value |")
+    lines.append("|--------|-------|")
+    lines.append(f"| Segments | {ts['segment_count']} |")
+    lines.append(f"| Speakers | {ts['speaker_count']} |")
+    lines.append(f"| Words | {ts['word_count']:,} |")
+    lines.append(f"| Language | {ts['language']} |")
+    lines.append("")
+
+    # LLM
+    if report.get("llm"):
+        llm = report["llm"]
+        lines.append("## LLM Extraction")
+        lines.append("")
+        lines.append("| Metric | Value |")
+        lines.append("|--------|-------|")
+        lines.append(f"| Chunks | {llm['chunk_count']} |")
+        if llm.get("estimated_tokens_per_chunk"):
+            avg_tokens = sum(llm["estimated_tokens_per_chunk"]) // len(llm["estimated_tokens_per_chunk"])
+            lines.append(f"| Avg tokens/chunk | ~{avg_tokens:,} |")
+            for i, tok in enumerate(llm["estimated_tokens_per_chunk"]):
+                lines.append(f"| Chunk {i+1} tokens | ~{tok:,} |")
+        if llm.get("prompt_sizes_chars"):
+            for i, sz in enumerate(llm["prompt_sizes_chars"]):
+                lines.append(f"| Chunk {i+1} prompt size | {sz:,} chars |")
+        lines.append("")
+
+    # Extraction results
+    if report.get("extraction"):
+        ext = report["extraction"]
+        lines.append("## Extraction Results")
+        lines.append("")
+        lines.append("| Type | Count |")
+        lines.append("|------|------:|")
+        lines.append(f"| Topics | {ext['topic_count']} |")
+        lines.append(f"| Decisions | {ext['decision_count']} |")
+        lines.append(f"| Action items | {ext['action_item_count']} |")
+        lines.append(f"| Questions | {ext['question_count']} |")
+        lines.append(f"| Keywords | {ext['keyword_count']} |")
+        lines.append("")
+
+    # Quality
+    if report.get("quality"):
+        q = report["quality"]
+        lines.append("## Quality Flags")
+        lines.append("")
+        lines.append(f"**Total:** {q['total_flags']}")
+        lines.append("")
+        lines.append("| Type | Count |")
+        lines.append("|------|------:|")
+        for typ, count in q["by_type"].items():
+            lines.append(f"| {typ} | {count} |")
+        lines.append("")
+
+    # Memory
+    mem = report["memory"]
+    lines.append("## Memory")
+    lines.append("")
+    lines.append("| Measurement | Value |")
+    lines.append("|-------------|------:|")
+    lines.append(f"| Process RSS start | {mem['process_rss_start_mb']:.0f} MB |")
+    lines.append(f"| Process RSS after transcription | {mem['process_rss_after_transcription_mb']:.0f} MB |")
+    lines.append(f"| Process RSS end | {mem['process_rss_end_mb']:.0f} MB |")
+    if mem["gpu_peak_after_transcription_mb"] > 0:
+        lines.append(f"| GPU peak (transcription) | {mem['gpu_peak_after_transcription_mb']:.0f} MB |")
+    lines.append("")
+
+    # Speed
+    inp_duration = report["input"]["duration_seconds"]
+    if total > 0:
+        realtime_ratio = inp_duration / total
+        lines.append("## Performance")
+        lines.append("")
+        lines.append(f"**{realtime_ratio:.2f}x realtime** "
+                     f"({inp['duration_formatted']} audio processed in {total_str})")
+        lines.append("")
 
     return "\n".join(lines)

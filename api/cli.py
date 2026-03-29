@@ -88,12 +88,18 @@ def process(file, output_dir, whisper_model, llm_model, ollama_url, config_path,
 @click.option("--config", "config_path", type=click.Path(exists=True), default=None, help="Config file path")
 @click.option("--no-llm", is_flag=True, default=False, help="Skip LLM extraction, benchmark transcription only")
 @click.option("--hf-token", default=None, help="HuggingFace token for pyannote diarization model")
-@click.option("--json-output", "json_output", is_flag=True, default=False, help="Output JSON report instead of formatted text")
-@click.option("--output-report", type=click.Path(dir_okay=False, writable=True), default=None, help="Save report to file")
+@click.option("--json-output", "json_output", is_flag=True, default=False, help="Output JSON to terminal instead of formatted text")
+@click.option("--report-dir", type=click.Path(), default="./benchmark-reports", help="Directory to save reports (default: ./benchmark-reports)")
+@click.option("--no-save", is_flag=True, default=False, help="Don't save report files, only print to terminal")
 @click.option("--save-db", is_flag=True, default=False, help="Save results to database (off by default for benchmarks)")
-def benchmark(file, output_dir, whisper_model, llm_model, ollama_url, config_path, no_llm, hf_token, json_output, output_report, save_db):
-    """Benchmark the pipeline with detailed timing for each stage."""
+def benchmark(file, output_dir, whisper_model, llm_model, ollama_url, config_path, no_llm, hf_token, json_output, report_dir, no_save, save_db):
+    """Benchmark the pipeline with detailed timing for each stage.
+
+    By default saves both a .md report (human-readable) and a .json report
+    (structured, best for feeding to Claude) into ./benchmark-reports/.
+    """
     import json as json_module
+    from datetime import datetime
 
     file_path = Path(file)
 
@@ -120,24 +126,37 @@ def benchmark(file, output_dir, whisper_model, llm_model, ollama_url, config_pat
         cli_overrides=cli_overrides,
     )
 
-    from api.benchmark import benchmark_pipeline, format_report_text
+    from api.benchmark import benchmark_pipeline, format_report_markdown, format_report_text
 
     try:
         if not json_output:
             console.print("\n[bold]Starting pipeline benchmark...[/]\n")
         report = benchmark_pipeline(file_path, config, no_llm=no_llm, save_to_db=save_db)
 
+        # Terminal output
         if json_output:
-            output_text = json_module.dumps(report, indent=2)
-            click.echo(output_text)
+            click.echo(json_module.dumps(report, indent=2))
         else:
-            output_text = format_report_text(report)
-            console.print(output_text)
+            console.print(format_report_text(report))
 
-        if output_report:
-            report_path = Path(output_report)
-            report_path.write_text(output_text, encoding="utf-8")
-            console.print(f"\n[bold green]Report saved to:[/] {report_path}")
+        # Save reports to disk (default behavior)
+        if not no_save:
+            report_path = Path(report_dir)
+            report_path.mkdir(parents=True, exist_ok=True)
+
+            timestamp = datetime.now().strftime("%Y-%m-%d-%H%M%S")
+            stem = file_path.stem.replace(" ", "-").lower()
+            base_name = f"benchmark-{stem}-{timestamp}"
+
+            md_path = report_path / f"{base_name}.md"
+            json_path = report_path / f"{base_name}.json"
+
+            md_path.write_text(format_report_markdown(report), encoding="utf-8")
+            json_path.write_text(json_module.dumps(report, indent=2), encoding="utf-8")
+
+            console.print(f"\n[bold green]Reports saved:[/]")
+            console.print(f"  Markdown: {md_path}")
+            console.print(f"  JSON:     {json_path}")
 
     except Exception as e:
         console.print(f"\n[bold red]Benchmark failed:[/] {e}")
