@@ -17,6 +17,10 @@ A local AI meeting notes app that takes recorded meeting files and produces stru
 
 ## Requirements
 
+**For Docker (recommended):** just [Docker](https://docs.docker.com/get-docker/) with Compose v2 and a [HuggingFace](https://huggingface.co) account.
+
+**For manual install:**
+
 - Python 3.10+
 - [Node.js](https://nodejs.org/) 18+ (for the web frontend)
 - NVIDIA GPU with CUDA (recommended, CPU fallback available)
@@ -24,7 +28,37 @@ A local AI meeting notes app that takes recorded meeting files and produces stru
 - [Ollama](https://ollama.ai/) installed and running
 - HuggingFace account with access to [pyannote/speaker-diarization-community-1](https://huggingface.co/pyannote/speaker-diarization-community-1)
 
-## Quick Start
+## Docker (Recommended)
+
+The easiest way to run Meeting Notes. Requires [Docker](https://docs.docker.com/get-docker/) with Compose v2.
+
+```bash
+# 1. Create your config file and set hf_token (required for speaker diarization)
+cp config.docker.yaml config.yaml
+# Edit config.yaml — set hf_token and choose your LLM provider
+
+# 2a. With local Ollama:
+docker compose --profile ollama up --build
+
+# 2b. With an external LLM (OpenAI, Azure, etc.) — set llm_provider/key in config.yaml:
+docker compose up --build
+```
+
+Open **http://localhost:3000** for the web UI.
+
+If using Ollama, pull the model after first start:
+```bash
+docker compose exec ollama ollama pull qwen2.5-coder:32b
+```
+
+**GPU support** (requires [nvidia-container-toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/install-guide.html)):
+```bash
+docker compose -f docker-compose.yml -f docker-compose.gpu.yml --profile ollama up --build
+```
+
+See `config.docker.yaml` for all configuration options (LLM provider, database, transcription settings).
+
+## Quick Start (Manual)
 
 ```bash
 # 1. Create a virtual environment
