@@ -46,6 +46,7 @@ meetings_table = Table(
     metadata,
     Column("id", Integer, primary_key=True, autoincrement=True),
     Column("filename", String(255), unique=True, nullable=False),
+    Column("title", String(500), nullable=True),
     Column("job_id", String(12), nullable=True),
     Column("meeting_date", String(10)),
     Column("meeting_time", String(5)),
@@ -204,6 +205,7 @@ class MeetingRepository:
             result = conn.execute(
                 insert(meetings_table).values(
                     filename=sidecar.get("filename", ""),
+                    title=sidecar.get("title", ""),
                     job_id=job_id,
                     meeting_date=meta.get("meeting_date", ""),
                     meeting_time=meta.get("meeting_time", ""),
@@ -240,11 +242,17 @@ class MeetingRepository:
             return row is not None
 
     def list_meetings(self) -> list[dict]:
-        """Return summary dicts matching the GET /api/notes response shape."""
+        """Return summary dicts for GET /api/notes.
+
+        Each dict contains: filename, title, meeting_date, meeting_time,
+        duration, speakers, topic_count, action_item_count.
+        The title may be empty for meetings created before the title feature.
+        """
         with self._engine.connect() as conn:
             rows = conn.execute(
                 select(
                     meetings_table.c.filename,
+                    meetings_table.c.title,
                     meetings_table.c.meeting_date,
                     meetings_table.c.meeting_time,
                     meetings_table.c.duration,
@@ -254,7 +262,12 @@ class MeetingRepository:
                 )
                 .order_by(meetings_table.c.filename.desc())
             ).mappings().all()
-            return [dict(r) for r in rows]
+            results = []
+            for r in rows:
+                d = dict(r)
+                d["title"] = d.get("title") or ""
+                results.append(d)
+            return results
 
     @staticmethod
     def _build_meeting_meta(row: dict) -> dict:
@@ -321,6 +334,7 @@ class MeetingRepository:
 
             return {
                 "filename": row["filename"],
+                "title": row.get("title") or "",
                 "job_id": row.get("job_id"),
                 "metadata": self._build_meeting_meta(row),
                 "summary": {
@@ -440,6 +454,7 @@ class MeetingRepository:
                 update(meetings_table)
                 .where(meetings_table.c.id == meeting_id)
                 .values(
+                    title=sidecar.get("title", ""),
                     markdown_content=markdown_content,
                     llm_model=meta.get("llm_model", ""),
                     topic_count=summary.get("topic_count", 0),

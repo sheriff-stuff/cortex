@@ -116,10 +116,15 @@ export default function NotesList({ onSelect, onUpload }: Props) {
               <CardContent>
                 <div className="flex justify-between items-baseline gap-3">
                   <span className="text-[17px] font-semibold">
-                    {formatMeetingDate(n.meeting_date, n.meeting_time)}
+                    {n.title || formatMeetingDate(n.meeting_date, n.meeting_time)}
                   </span>
                   <span className="text-sm text-muted-foreground">{n.duration}</span>
                 </div>
+                {n.title && (
+                  <div className="text-sm text-muted-foreground mt-0.5">
+                    {formatMeetingDate(n.meeting_date, n.meeting_time)}
+                  </div>
+                )}
                 <div className="flex gap-4 mt-1.5 text-[13px] text-muted-foreground">
                   <span>{n.speakers} speaker{n.speakers !== 1 ? 's' : ''}</span>
                   <span>{n.topic_count} topic{n.topic_count !== 1 ? 's' : ''}</span>

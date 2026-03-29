@@ -14,6 +14,7 @@ from api.transcribe import Segment
 
 @dataclass
 class ExtractionResult:
+    title: str = ""
     overview: str = ""
     topics: list[dict] = field(default_factory=list)
     decisions: list[dict] = field(default_factory=list)
@@ -105,6 +106,7 @@ def _deduplicate_items(items: list[dict], text_key: str, time_threshold: float =
 
 def merge_extractions(chunk_results: list[dict]) -> ExtractionResult:
     """Merge and deduplicate extraction results from multiple chunks."""
+    title = ""
     overview = ""
     all_topics = []
     all_decisions = []
@@ -113,6 +115,8 @@ def merge_extractions(chunk_results: list[dict]) -> ExtractionResult:
     all_keywords: list[str] = []
 
     for result in chunk_results:
+        if result.get("title"):
+            title = result["title"]  # last chunk's title wins (most context)
         if not overview and result.get("overview"):
             overview = result["overview"]
         all_topics.extend(result.get("topics", []))
@@ -131,6 +135,7 @@ def merge_extractions(chunk_results: list[dict]) -> ExtractionResult:
             unique_keywords.append(kw)
 
     return ExtractionResult(
+        title=title,
         overview=overview,
         topics=_deduplicate_items(all_topics, "title"),
         decisions=_deduplicate_items(all_decisions, "decision"),

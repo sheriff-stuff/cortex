@@ -8,6 +8,7 @@ export interface Job {
 
 export interface NoteSummary {
   filename: string;
+  title?: string;
   meeting_date: string;
   meeting_time: string;
   duration: string;
@@ -63,6 +64,7 @@ export interface TranscriptSegment {
 
 export interface MeetingNotes {
   filename: string;
+  title?: string;
   job_id?: string | null;
   metadata: NoteMetadata;
   summary: NoteSummaryCount;

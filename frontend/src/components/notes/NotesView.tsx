@@ -87,7 +87,7 @@ export default function NotesView({ notes: initialNotes, onReset, onNotesUpdated
       <div className="flex items-start justify-between gap-4">
         <div>
           <h1 className="text-2xl font-semibold">
-            Notes &mdash; {metadata.meeting_date}
+            {notes.title || `Notes \u2014 ${metadata.meeting_date}`}
           </h1>
           <div className="flex flex-wrap gap-2 mt-2">
             <Badge variant="secondary">Duration: {metadata.duration}</Badge>

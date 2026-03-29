@@ -66,6 +66,7 @@ def response_from_sidecar(sidecar: dict, filename: str) -> dict:
         sidecar.get("questions", []),
     )
     result["filename"] = filename
+    result["title"] = sidecar.get("title", "")
     result["job_id"] = sidecar.get("job_id")
     result["metadata"] = sidecar["metadata"]
     result["summary"] = sidecar["summary"]
