@@ -40,7 +40,29 @@ When you spot one of these, tell me what you'd add to `CLAUDE.md` and where (whi
 
 Push the changes (if any). Then leave a single top-level comment on the PR summarizing what was done — list which comments were addressed with fixes, which were split into separate PRs (with links), and which were pushed back on, with brief reasoning. This gives the reviewer a quick overview without needing to re-read every thread.
 
-Do NOT give me a summary yet — proceed to the polling loop below.
+Do NOT give me a summary yet — proceed to test plan verification below.
+
+## Test plan verification
+
+Before the PR can be merged, **every checkbox in the test plan must be ticked**. Parse the PR body for the `## Test plan` section and extract all checkboxes (`- [ ]` and `- [x]`).
+
+### For each unchecked item:
+
+1. **Can you verify it yourself?** (e.g. "run tests", "verify the API response", "check the build passes") — Do it. If it passes, tick the checkbox by updating the PR body via `gh pr edit --body` with the checkbox changed from `- [ ]` to `- [x]`.
+
+2. **Can't verify / unsure?** (e.g. "test on a mobile device", "verify in staging", requires UI interaction, needs access you don't have) — Flag it to the user with a clear message:
+   - What the test item is
+   - Why you can't do it yourself
+   - What the user needs to do
+
+### After attempting all items:
+
+- **All boxes ticked** → proceed to the polling loop.
+- **Some remain unticked** → tell the user exactly which items need their attention. Do NOT proceed to merge. The polling loop will re-check the test plan on each cycle, so if the user ticks boxes manually between cycles, the next pass will pick that up.
+
+### Re-check on each polling cycle
+
+During the polling loop, re-parse the PR body on every cycle to check for newly ticked boxes (the user may have completed manual testing between cycles). Only consider the PR merge-ready when all boxes are `[x]`.
 
 ## Polling loop
 
@@ -90,3 +112,11 @@ Track which cycle you're on (1 through 5). Display it in the sleeping indicator 
 ## Final summary (output only when the loop ends)
 
 Give me a summary of what you fixed, what you spun off into separate PRs, and what you pushed back on. If the loop ended because all comments were resolved, say so. If it ended because the 5-cycle cap was hit, list any remaining unresolved comments.
+
+### Merge gate
+
+The PR **must not be merged** unless:
+1. All reviewer comments are resolved (replied to, with fixes pushed)
+2. All test plan checkboxes are `[x]`
+
+If both conditions are met, say so clearly. If either condition fails, list what's still outstanding and do NOT merge.
