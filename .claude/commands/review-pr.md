@@ -26,6 +26,16 @@ Every comment and reply you post on the PR MUST start with:
 
 This makes it clear the response was AI-generated, not from the repo owner.
 
+## Learning from comments
+
+For each comment you handle, consider whether the underlying issue is something that could recur. If so, **recommend adding a rule or gotcha to `CLAUDE.md`** to prevent it from happening again. Examples of things worth capturing:
+
+- A pattern or convention the reviewer called out (e.g. "always use X instead of Y")
+- A gotcha or footgun that isn't obvious from the code (e.g. "this API silently drops nulls")
+- A project rule that was violated (e.g. "never import from that module directly")
+
+When you spot one of these, tell me what you'd add to `CLAUDE.md` and where (which section). Don't add it silently — suggest it as part of your reply so I can approve it. If I approve, make the edit to `CLAUDE.md` alongside the fix.
+
 ## After handling all comments
 
 Push the changes (if any). Then leave a single top-level comment on the PR summarizing what was done — list which comments were addressed with fixes, which were split into separate PRs (with links), and which were pushed back on, with brief reasoning. This gives the reviewer a quick overview without needing to re-read every thread.
