@@ -17,6 +17,16 @@ export default function NotesList({ onSelect, onUpload }: Props) {
   const [activeJobs, setActiveJobs] = useState<Job[]>([]);
   const [loading, setLoading] = useState(true);
   const eventSourcesRef = useRef<Map<string, EventSource>>(new Map());
+  const discoveryRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  const cleanupJob = useCallback((jobId: string) => {
+    const es = eventSourcesRef.current.get(jobId);
+    if (es) {
+      es.close();
+      eventSourcesRef.current.delete(jobId);
+    }
+    setActiveJobs(prev => prev.filter(j => j.job_id !== jobId));
+  }, []);
 
   const connectJobSSE = useCallback((jobId: string) => {
     if (eventSourcesRef.current.has(jobId)) return;
@@ -31,9 +41,7 @@ export default function NotesList({ onSelect, onUpload }: Props) {
     });
 
     es.addEventListener('done', async () => {
-      es.close();
-      eventSourcesRef.current.delete(jobId);
-      setActiveJobs(prev => prev.filter(j => j.job_id !== jobId));
+      cleanupJob(jobId);
       try {
         const notesList = await api.listNotes();
         setNotes(notesList);
@@ -43,11 +51,9 @@ export default function NotesList({ onSelect, onUpload }: Props) {
     });
 
     es.onerror = () => {
-      es.close();
-      eventSourcesRef.current.delete(jobId);
-      setActiveJobs(prev => prev.filter(j => j.job_id !== jobId));
+      cleanupJob(jobId);
     };
-  }, []);
+  }, [cleanupJob]);
 
   // Fetch notes and active jobs on mount, open SSE for each active job
   useEffect(() => {
@@ -63,6 +69,33 @@ export default function NotesList({ onSelect, onUpload }: Props) {
     return () => {
       eventSourcesRef.current.forEach(es => es.close());
       eventSourcesRef.current.clear();
+    };
+  }, [connectJobSSE]);
+
+  // Slow poll to discover new jobs (e.g. started from another tab)
+  useEffect(() => {
+    discoveryRef.current = setInterval(async () => {
+      try {
+        const jobs = await api.listJobs();
+        for (const job of jobs) {
+          if (!eventSourcesRef.current.has(job.job_id)) {
+            setActiveJobs(prev => {
+              if (prev.some(j => j.job_id === job.job_id)) return prev;
+              return [...prev, job];
+            });
+            connectJobSSE(job.job_id);
+          }
+        }
+      } catch {
+        // Discovery poll failed — ignore transient errors
+      }
+    }, 10000);
+
+    return () => {
+      if (discoveryRef.current) {
+        clearInterval(discoveryRef.current);
+        discoveryRef.current = null;
+      }
     };
   }, [connectJobSSE]);
 

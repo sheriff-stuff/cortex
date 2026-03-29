@@ -52,7 +52,14 @@ export function usePollJob(options: UsePollJobOptions = {}) {
       });
 
       es.onerror = () => {
-        // Connection lost — stop cleanly; caller can retry if needed
+        // Connection lost — notify caller so UI can recover/retry
+        const job: Job = {
+          job_id: jobId,
+          status: 'failed',
+          progress: 'Connection error',
+          source_filename: '',
+        };
+        onFailed?.(job);
         stopPolling();
       };
     },
