@@ -113,6 +113,15 @@ Track which cycle you're on (1 through 5). Display it in the sleeping indicator 
 
 Give me a summary of what you fixed, what you spun off into separate PRs, and what you pushed back on. **Always include a link to each PR** (e.g. `https://github.com/owner/repo/pull/123`) so the user can click through directly. If the loop ended because all comments were resolved, say so. If it ended because the 5-cycle cap was hit, list any remaining unresolved comments with a link to the PR.
 
+### Manual actions required
+
+If any test plan items could not be verified automatically, include a **"Manual actions required"** section at the end of the final summary. For each item, clearly state:
+- What needs to be done
+- Why it couldn't be automated
+- Any prerequisites or setup steps needed
+
+This ensures the user has a concrete checklist of what they still need to do before merging, without having to go back and re-read the PR.
+
 ### Merge gate
 
 The PR **must not be merged** unless:
