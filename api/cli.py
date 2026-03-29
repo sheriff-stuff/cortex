@@ -123,7 +123,8 @@ def benchmark(file, output_dir, whisper_model, llm_model, ollama_url, config_pat
     from api.benchmark import benchmark_pipeline, format_report_text
 
     try:
-        console.print("\n[bold]Starting pipeline benchmark...[/]\n")
+        if not json_output:
+            console.print("\n[bold]Starting pipeline benchmark...[/]\n")
         report = benchmark_pipeline(file_path, config, no_llm=no_llm, save_to_db=save_db)
 
         if json_output:
