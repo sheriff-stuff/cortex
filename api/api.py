@@ -502,10 +502,16 @@ def create_app(config: Config | None = None) -> FastAPI:
         @app.post("/api/test/seed-meeting", status_code=201)
         async def seed_meeting(body: dict) -> dict:
             """Seed a meeting for E2E tests. Only available with in-memory DB."""
+            sidecar = body.get("sidecar")
+            if not isinstance(sidecar, dict):
+                raise HTTPException(
+                    status_code=400,
+                    detail="Field 'sidecar' is required and must be an object",
+                )
             meeting_id = repo.save_meeting(
-                body["sidecar"], body.get("markdown", ""), body.get("job_id"),
+                sidecar, body.get("markdown", ""), body.get("job_id"),
             )
-            return {"meeting_id": meeting_id, "filename": body["sidecar"].get("filename", "")}
+            return {"meeting_id": meeting_id, "filename": sidecar.get("filename", "")}
 
     return app
 

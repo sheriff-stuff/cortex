@@ -18,7 +18,7 @@ export default defineConfig({
       command: 'python -X utf8 -c "from api.cli import main; main()" serve --port 9099 --database-url sqlite:///:memory:',
       cwd: '..',
       url: 'http://localhost:9099/api/notes',
-      reuseExistingServer: !process.env.CI,
+      reuseExistingServer: false,
       timeout: 30_000,
       env: { PYTHONUTF8: '1' },
     },
