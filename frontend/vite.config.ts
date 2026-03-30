@@ -1,3 +1,4 @@
+/// <reference types="vitest/config" />
 import path from 'path'
 import { defineConfig } from 'vite'
 import tailwindcss from '@tailwindcss/vite'
@@ -22,6 +23,16 @@ export default defineConfig({
         target: apiTarget,
         changeOrigin: true,
       },
+    },
+  },
+  test: {
+    include: ['src/**/*.test.ts', 'src/**/*.test.tsx'],
+    exclude: ['e2e/**'],
+    globals: true,
+    coverage: {
+      provider: 'v8',
+      include: ['src/**'],
+      exclude: ['src/**/*.test.ts', 'src/**/*.test.tsx', 'src/main.tsx', 'src/vite-env.d.ts'],
     },
   },
 })
